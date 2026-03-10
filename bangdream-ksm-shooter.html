@@ -21,6 +21,8 @@
     .bullet{width:8px;height:14px;background:#ffe46f;border-radius:999px}
     .eb{width:10px;height:10px;background:#ff7070;border-radius:999px}
     .drop{font-size:20px}
+    .skillfx{font-size:26px;color:#ffd6f5;text-shadow:0 0 10px #ff66cc;animation:burst .7s ease-out forwards}
+    @keyframes burst{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-180%) scale(1.35)}}
     .controls{display:flex;gap:8px;margin-top:8px}
   </style>
 </head>
@@ -33,6 +35,7 @@
       <span>X <b id="px">0</b></span>
       <span>模式 <b id="mode">普通</b></span>
       <span>道具剩余 <b id="buff">0.0s</b></span>
+      <span>友希那技 <b id="yukina">0%</b></span>
     </div>
     <button id="restart" class="btn">重开</button>
   </div>
@@ -43,6 +46,7 @@
     <button class="btn" id="up">↑ 上移</button>
     <button class="btn" id="down">↓ 下移</button>
     <button class="btn" id="fire">开火</button>
+    <button class="btn" id="yukinaBtn">友希那技(K)</button>
   </div>
 </div>
 <script>
@@ -53,12 +57,15 @@
   const pxEl=document.getElementById('px');
   const modeEl=document.getElementById('mode');
   const buffEl=document.getElementById('buff');
+  const yukinaEl=document.getElementById('yukina');
+  const yukinaBtn=document.getElementById('yukinaBtn');
   const W=960,H=540;
   const sx=()=>game.clientWidth/W, sy=()=>game.clientHeight/H;
   const ksm='https://bestdori.com/res/icon/chara_icon_1.png';
   const pool=Array.from({length:39},(_,i)=>`https://bestdori.com/res/icon/chara_icon_${i+2}.png`);
 
   let g,keys=new Set(),holdL=false,holdR=false,holdU=false,holdD=false,autoFire=true;
+  let audioCtx=null;
 
   const mk=(cls,html='')=>{const d=document.createElement('div');d.className='obj '+cls;d.innerHTML=html;game.appendChild(d);return d};
   const place=(el,x,y)=>{el.style.left=(x*sx())+'px';el.style.top=(y*sy())+'px';};
@@ -66,11 +73,11 @@
   function init(){
     game.innerHTML='';
     const pEl=mk('player',`<img src="${ksm}">`);
-    g={score:0,hp:5,mode:'普通',buffType:null,buffUntil:0,shield:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,over:false};
+    g={score:0,hp:5,mode:'普通',buffType:null,buffUntil:0,shield:0,yukina:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,over:false};
     hud();
   }
 
-  function hud(){scoreEl.textContent=g.score;hpEl.textContent=g.hp;pxEl.textContent=Math.round(g.player.x);modeEl.textContent=g.mode+(g.shield>0?`(盾${g.shield})`:'' );const left=Math.max(0,g.buffUntil-g.t);buffEl.textContent=left.toFixed(1)+'s';}
+  function hud(){scoreEl.textContent=g.score;hpEl.textContent=g.hp;pxEl.textContent=Math.round(g.player.x);modeEl.textContent=g.mode+(g.shield>0?`(盾${g.shield})`:'' );const left=Math.max(0,g.buffUntil-g.t);buffEl.textContent=left.toFixed(1)+'s';yukinaEl.textContent=Math.min(100,Math.floor(g.yukina))+'%';}
 
   function addEnemy(){
     const el=mk('enemy',`<img src="${pool[(Math.random()*pool.length)|0]}">`);
@@ -120,6 +127,33 @@
 
   function hit(a,b,ra=18,rb=18){const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy<=(ra+rb)*(ra+rb)}
 
+  function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+  function playYukinaSfx(){
+    try{ ensureAudio(); const t=audioCtx.currentTime; const notes=[659,784,1047];
+      notes.forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sawtooth';o.frequency.value=f;o.connect(g);g.connect(audioCtx.destination);g.gain.setValueAtTime(0.0001,t+i*0.08);g.gain.exponentialRampToValueAtTime(0.14,t+i*0.08+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+i*0.08+0.26);o.start(t+i*0.08);o.stop(t+i*0.08+0.28);});
+    }catch(e){}
+  }
+  function castYukina(){
+    if(g.yukina<100) return;
+    g.yukina=0;
+    g.mode='凑友希那·Roselia终奏';
+    g.eb=[];
+    let killed=0;
+    for(const e of g.en){ if(e.hp>0){ e.hp=0; e.dead=true; killed++; } }
+    g.score += 50 + killed*10;
+    for(let i=0;i<10;i++){
+      const fx=mk('skillfx','🌹');
+      const x=60+Math.random()*(W-120), y=120+Math.random()*(H-220);
+      place(fx,x,y);
+      setTimeout(()=>fx.remove(),700);
+    }
+    const flash=mk('skillfx','Roselia · Yukina');
+    flash.style.fontSize='30px'; flash.style.color='#ffc3f0';
+    place(flash,W/2,H/2);
+    setTimeout(()=>flash.remove(),800);
+    playYukinaSfx();
+  }
+
   function step(dt){
     g.t+=dt;
     if(holdL||keys.has('ArrowLeft')||keys.has('a')) g.player.x-=320*dt;
@@ -154,7 +188,7 @@
         if(e.hp>0 && hit(b,e,7,16)){
           e.hp-=(b.dmg||1);
           if((b.pierce||0)>0){ b.pierce--; } else { b.dead=true; }
-          if(e.hp<=0){e.dead=true;g.score+=10;if(Math.random()<0.25)addDrop(e.x,e.y);} 
+          if(e.hp<=0){e.dead=true;g.score+=10;g.yukina=Math.min(100,g.yukina+8);if(Math.random()<0.25)addDrop(e.x,e.y);} 
         }
       }
     }
@@ -171,7 +205,7 @@
       else if(d.kind==='keyboard'){ g.mode='键盘激光'; }
       else if(d.kind==='drum'){ g.mode='鼓点护盾'; g.shield=Math.min(5,g.shield+3); }
       else if(d.kind==='bass'){ g.mode='贝斯减速'; }
-      else if(d.kind==='violin'){ g.mode='小提琴追踪'; }
+      else if(d.kind==='violin'){ g.mode='小提琴追踪'; g.yukina=Math.min(100,g.yukina+22); }
     }
 
     g.en=g.en.filter(e=>!e.dead&&e.y<H+40);
@@ -210,8 +244,9 @@
   document.getElementById('down').onpointerup=()=>holdD=false;
   document.getElementById('down').onclick=()=>{g.player.y+=60;hud();};
   document.getElementById('fire').onclick=()=>addBullet();
+  yukinaBtn.onclick=()=>{castYukina();hud();};
   document.getElementById('restart').onclick=init;
-  window.addEventListener('keydown',e=>keys.add(e.key));
+  window.addEventListener('keydown',e=>{keys.add(e.key); if(e.key==='k'||e.key==='K'){castYukina();hud();}});
   window.addEventListener('keyup',e=>keys.delete(e.key));
   window.addEventListener('pointerup',()=>{holdL=false;holdR=false;holdU=false;holdD=false;});
 
