@@ -3,537 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>祥子 × 素世 连连看（经典连线版）</title>
+  <title>祥子×素世 连连看（外链图片版）</title>
   <style>
-    :root {
-      --bg: #0e1022;
-      --panel: #1a1e3c;
-      --tile: #2b315f;
-      --text: #eef1ff;
-      --muted: #a9b2e6;
-      --accent: #ff7ac6;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-      color: var(--text);
-      min-height: 100vh;
-      background: radial-gradient(circle at 20% 8%, #2b3370 0%, var(--bg) 45%);
-      display: grid;
-      place-items: center;
-      padding: 16px;
-    }
-    .wrap {
-      width: min(980px, 100%);
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 16px;
-      padding: 14px;
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      box-shadow: 0 16px 40px rgba(0,0,0,.35);
-    }
-    h1 { margin: 0 0 8px; font-size: clamp(21px, 3vw, 30px); }
-    .sub { color: var(--muted); margin-bottom: 10px; font-size: 14px; }
-    .bar {
-      display: flex;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    .stats { display: flex; gap: 8px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
-    .badge {
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
-    }
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 8px 12px;
-      font-weight: 700;
-      cursor: pointer;
-      color: #2b0120;
-      background: var(--accent);
-    }
-    .board-wrap {
-      width: fit-content;
-      margin: 0 auto;
-      position: relative;
-      padding: 6px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-    }
-    #board {
-      display: grid;
-      grid-template-columns: repeat(8, 74px);
-      grid-template-rows: repeat(8, 74px);
-      gap: 6px;
-    }
-    .tile {
-      width: 74px;
-      height: 74px;
-      border: 1px solid rgba(255,255,255,.2);
-      border-radius: 10px;
-      background: var(--tile);
-      padding: 3px;
-      cursor: pointer;
-      transition: transform .12s ease, box-shadow .12s ease;
-    }
-    .tile:hover { transform: translateY(-1px); }
-    .tile img {
-      width: 100%;
-      height: 100%;
-      border-radius: 8px;
-      object-fit: cover;
-      display: block;
-      pointer-events: none;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-    .tile.selected {
-      box-shadow: 0 0 0 3px #ffd46f;
-      border-color: #ffd46f;
-    }
-    .tile.removed {
-      visibility: hidden;
-      pointer-events: none;
-    }
-    #lines {
-      position: absolute;
-      inset: 6px;
-      pointer-events: none;
-    }
-    .tip { margin-top: 10px; color: var(--muted); font-size: 13px; }
-
-    @media (max-width: 760px) {
-      #board {
-        grid-template-columns: repeat(8, 44px);
-        grid-template-rows: repeat(8, 44px);
-        gap: 4px;
-      }
-      .tile { width: 44px; height: 44px; padding: 2px; border-radius: 7px; }
-      .tile img { border-radius: 6px; }
-    }
+    body{margin:0;background:#10142b;color:#eef;font-family:system-ui,"PingFang SC";display:grid;place-items:center;min-height:100vh;padding:12px}
+    .wrap{width:min(980px,100%);background:#1b2144;border:1px solid #ffffff22;border-radius:14px;padding:12px}
+    .bar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+    .stats{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:#b9c2ff}
+    .stats span{background:#ffffff14;border:1px solid #ffffff24;border-radius:999px;padding:6px 10px}
+    button{border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;background:#ff7ac6;color:#260018}
+    .boardWrap{position:relative;width:fit-content;margin:auto;padding:6px;background:#ffffff0a;border-radius:10px;border:1px solid #ffffff22}
+    #board{display:grid;grid-template-columns:repeat(8,72px);grid-template-rows:repeat(8,72px);gap:6px}
+    .tile{width:72px;height:72px;border:1px solid #ffffff2f;border-radius:9px;background:#2b356e;padding:2px;cursor:pointer}
+    .tile img{width:100%;height:100%;object-fit:cover;border-radius:7px;display:block}
+    .tile.sel{box-shadow:0 0 0 3px #ffd56d;border-color:#ffd56d}
+    .tile.removed{visibility:hidden;pointer-events:none}
+    #lines{position:absolute;inset:6px;pointer-events:none}
+    .tip{margin-top:8px;color:#aeb6e4;font-size:12px}
+    @media(max-width:760px){#board{grid-template-columns:repeat(8,44px);grid-template-rows:repeat(8,44px);gap:4px}.tile{width:44px;height:44px;padding:1px}}
   </style>
 </head>
 <body>
   <main class="wrap">
-    <h1>丰川祥子 × 长崎素世 连连看</h1>
-    <div class="sub">经典规则：只能连相同图片；路径不能穿过未消除格子，且最多 2 次拐弯。</div>
-
+    <h3 style="margin:0 0 8px">丰川祥子 × 长崎素世 连连看（外链图片）</h3>
+    <div style="color:#b9c2ff;font-size:13px;margin-bottom:8px">规则：仅可连接相同图片；路径不能穿过未消除格子；最多2次拐弯。</div>
     <div class="bar">
       <div class="stats">
-        <span class="badge">步数：<b id="moves">0</b></span>
-        <span class="badge">剩余：<b id="left">64</b></span>
-        <span class="badge">用时：<b id="time">00:00</b></span>
+        <span>步数 <b id="moves">0</b></span>
+        <span>剩余 <b id="left">64</b></span>
+        <span>用时 <b id="time">00:00</b></span>
       </div>
-      <div style="display:flex; gap:8px;">
-        <button id="shuffleBtn">重排剩余</button>
-        <button id="restartBtn">重新开始</button>
-      </div>
+      <div style="display:flex;gap:8px"><button id="shuffle">重排</button><button id="restart">重开</button></div>
     </div>
-
-    <div class="board-wrap">
-      <div id="board"></div>
-      <svg id="lines"></svg>
-    </div>
-
-    <div class="tip">说明：使用的是本地生成的“角色不同服装造型图片牌面”（纯图片，无文字牌面）。</div>
+    <div class="boardWrap"><div id="board"></div><svg id="lines"></svg></div>
+    <div class="tip">图片来源：bandori.fandom 外链（祥子/素世不同服装形象）。</div>
   </main>
-
-  <script>
-    const ROWS = 8, COLS = 8, TOTAL = ROWS * COLS;
-    const boardEl = document.getElementById('board');
-    const linesEl = document.getElementById('lines');
-    const movesEl = document.getElementById('moves');
-    const leftEl = document.getElementById('left');
-    const timeEl = document.getElementById('time');
-
-    const variants = makeVariants(); // 16 variants (祥子8 + 素世8)
-
-    let board = [];
-    let selected = null;
-    let moves = 0;
-    let left = TOTAL;
-    let startTs = Date.now();
-
-    function makeVariants() {
-      const list = [];
-      const sakikoThemes = [
-        ['礼服黑金', '#27211f', '#d8b56a', '#f2d8ca', '#41343a'],
-        ['校服蓝', '#2a3f66', '#8fb7ff', '#f2d9ca', '#3b2f35'],
-        ['白裙', '#ececf0', '#ffd3e8', '#f2d7c7', '#4a3b42'],
-        ['舞台紫', '#2a234a', '#bd96ff', '#f2d9ca', '#3e3037'],
-        ['和风红', '#672934', '#ffc2c2', '#f3d7c6', '#3e3236'],
-        ['冬装灰', '#4c4f60', '#a9c6ff', '#f1d5c4', '#3a3235'],
-        ['夏装青', '#2e6660', '#9ff0df', '#f1d6c7', '#3c3138'],
-        ['演出金', '#52401d', '#ffe085', '#f1d4c3', '#40333a']
-      ];
-      const soyoThemes = [
-        ['便服绿', '#325842', '#a9efc6', '#f4ddcc', '#5e463f'],
-        ['校服绿', '#29483f', '#7dd9ac', '#f2dcc9', '#5a443f'],
-        ['白衬衫', '#f3f5f7', '#b7dfda', '#f4dfcf', '#604943'],
-        ['演出蓝', '#22425f', '#8dcfff', '#f2ddcb', '#5c433e'],
-        ['秋装棕', '#5c4638', '#ffca9a', '#f1dcc9', '#5f4841'],
-        ['春装粉', '#a45d79', '#ffd0e4', '#f2dfce', '#5d4540'],
-        ['外套黑', '#2b2f37', '#a0d5e8', '#f2ddcb', '#5a453f'],
-        ['舞台青', '#1f5b66', '#9ce8f0', '#f2dcc9', '#5a443f']
-      ];
-
-      sakikoThemes.forEach((t, i) => list.push({ id: `sakiko_${i+1}`, src: drawCard('丰川祥子', ...t) }));
-      soyoThemes.forEach((t, i) => list.push({ id: `soyo_${i+1}`, src: drawCard('长崎素世', ...t) }));
-      return list;
-    }
-
-    function drawCard(name, outfitName, cloth, accent, skin, hair) {
-      const cv = document.createElement('canvas');
-      cv.width = 120; cv.height = 120;
-      const g = cv.getContext('2d');
-
-      const grad = g.createLinearGradient(0, 0, 120, 120);
-      grad.addColorStop(0, shade(cloth, 18));
-      grad.addColorStop(1, shade(cloth, -10));
-      g.fillStyle = grad;
-      g.fillRect(0, 0, 120, 120);
-
-      // frame pattern
-      g.strokeStyle = 'rgba(255,255,255,.23)';
-      g.lineWidth = 4;
-      g.strokeRect(4, 4, 112, 112);
-
-      // shoulders + clothes
-      g.fillStyle = cloth;
-      g.beginPath();
-      g.moveTo(24, 110);
-      g.quadraticCurveTo(60, 66, 96, 110);
-      g.closePath();
-      g.fill();
-
-      // collar accent
-      g.fillStyle = accent;
-      g.beginPath();
-      g.moveTo(45, 82); g.lineTo(60, 96); g.lineTo(75, 82); g.lineTo(60, 78);
-      g.closePath(); g.fill();
-
-      // neck
-      g.fillStyle = skin;
-      g.fillRect(52, 63, 16, 12);
-
-      // face
-      g.fillStyle = skin;
-      g.beginPath();
-      g.arc(60, 47, 22, 0, Math.PI * 2);
-      g.fill();
-
-      // hair
-      g.fillStyle = hair;
-      g.beginPath();
-      g.ellipse(60, 39, 25, 20, 0, 0, Math.PI * 2);
-      g.fill();
-      g.beginPath();
-      g.moveTo(36, 43); g.lineTo(33, 67); g.lineTo(47, 53); g.closePath(); g.fill();
-      g.beginPath();
-      g.moveTo(84, 43); g.lineTo(87, 67); g.lineTo(73, 53); g.closePath(); g.fill();
-
-      // eyes
-      g.fillStyle = '#1f2237';
-      g.beginPath(); g.ellipse(52, 48, 3.6, 2.2, 0, 0, Math.PI * 2); g.fill();
-      g.beginPath(); g.ellipse(68, 48, 3.6, 2.2, 0, 0, Math.PI * 2); g.fill();
-
-      // expression mark
-      g.strokeStyle = 'rgba(255,255,255,.65)';
-      g.lineWidth = 2;
-      if (name.includes('祥')) {
-        g.beginPath(); g.moveTo(84, 26); g.lineTo(94, 22); g.stroke();
-      } else {
-        g.beginPath(); g.arc(92, 26, 5, 0, Math.PI * 2); g.stroke();
-      }
-
-      // subtle outfit tag as tiny icon stripe (not text tile)
-      g.fillStyle = 'rgba(255,255,255,.16)';
-      g.fillRect(8, 98, 104, 14);
-      g.fillStyle = accent;
-      const dots = Math.min(8, outfitName.length);
-      for (let i = 0; i < dots; i++) g.fillRect(12 + i * 12, 102, 8, 6);
-
-      return cv.toDataURL('image/png');
-    }
-
-    function shade(hex, amt) {
-      const n = parseInt(hex.slice(1), 16);
-      let r = (n >> 16) + amt;
-      let g = ((n >> 8) & 0xff) + amt;
-      let b = (n & 0xff) + amt;
-      r = Math.max(0, Math.min(255, r));
-      g = Math.max(0, Math.min(255, g));
-      b = Math.max(0, Math.min(255, b));
-      return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
-    }
-
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = (Math.random() * (i + 1)) | 0;
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
-
-    function init() {
-      moves = 0;
-      left = TOTAL;
-      selected = null;
-      startTs = Date.now();
-
-      // 16 variants each appears 4 times => 64 cells
-      const deck = [];
-      for (const v of variants) for (let i = 0; i < 4; i++) deck.push({ id: v.id, src: v.src });
-      shuffle(deck);
-      board = deck;
-
-      if (!hasAnyMove()) shuffleRemainingUntilPlayable();
-      render();
-      updateStats();
-      clearLines();
-    }
-
-    function idx(r, c) { return r * COLS + c; }
-
-    function render() {
-      boardEl.innerHTML = '';
-      board.forEach((cell, i) => {
-        const r = (i / COLS) | 0;
-        const c = i % COLS;
-        const btn = document.createElement('button');
-        btn.className = 'tile' + (cell.id === 0 ? ' removed' : '');
-        btn.dataset.r = r;
-        btn.dataset.c = c;
-        if (selected && selected.r === r && selected.c === c) btn.classList.add('selected');
-        if (cell.id !== 0) {
-          const img = document.createElement('img');
-          img.src = cell.src;
-          img.alt = '角色图片';
-          btn.appendChild(img);
-        }
-        btn.addEventListener('click', () => onClick(r, c));
-        boardEl.appendChild(btn);
-      });
-      resizeSvg();
-    }
-
-    function updateStats() {
-      movesEl.textContent = moves;
-      leftEl.textContent = left;
-    }
-
-    function onClick(r, c) {
-      const aIdx = idx(r, c);
-      if (board[aIdx].id === 0) return;
-
-      if (!selected) {
-        selected = { r, c };
-        render();
-        return;
-      }
-
-      if (selected.r === r && selected.c === c) {
-        selected = null;
-        render();
-        return;
-      }
-
-      const bIdx = idx(selected.r, selected.c);
-      if (board[aIdx].id !== board[bIdx].id) {
-        selected = { r, c };
-        render();
-        return;
-      }
-
-      const path = findPath(selected.r, selected.c, r, c);
-      if (!path) {
-        selected = { r, c };
-        render();
-        return;
-      }
-
-      moves++;
-      drawPath(path);
-
-      const p = { ...selected };
-      selected = null;
-      setTimeout(() => {
-        board[idx(p.r, p.c)] = { id: 0, src: '' };
-        board[idx(r, c)] = { id: 0, src: '' };
-        left -= 2;
-        updateStats();
-        render();
-
-        if (left === 0) {
-          setTimeout(() => alert(`通关！步数 ${moves}，用时 ${formatTime(Date.now() - startTs)}`), 60);
-          return;
-        }
-
-        if (!hasAnyMove()) {
-          shuffleRemainingUntilPlayable();
-          render();
-        }
-      }, 120);
-    }
-
-    function buildGrid() {
-      const H = ROWS + 2, W = COLS + 2;
-      const g = Array.from({ length: H }, () => Array(W).fill(0));
-      for (let r = 1; r <= ROWS; r++) {
-        for (let c = 1; c <= COLS; c++) {
-          g[r][c] = board[idx(r - 1, c - 1)].id;
-        }
-      }
-      return g;
-    }
-
-    function findPath(r1, c1, r2, c2) {
-      const g = buildGrid();
-      const sr = r1 + 1, sc = c1 + 1, tr = r2 + 1, tc = c2 + 1;
-      const H = ROWS + 2, W = COLS + 2;
-      const dirs = [[-1,0],[0,1],[1,0],[0,-1]];
-
-      const visited = Array.from({ length: H }, () => Array.from({ length: W }, () => Array(4).fill(99)));
-      const q = [];
-
-      for (let d = 0; d < 4; d++) {
-        visited[sr][sc][d] = 0;
-        q.push({ r: sr, c: sc, d, t: 0, path: [[sr, sc]] });
-      }
-
-      while (q.length) {
-        const cur = q.shift();
-        const [dr, dc] = dirs[cur.d];
-        const nr = cur.r + dr, nc = cur.c + dc;
-
-        if (nr < 0 || nr >= H || nc < 0 || nc >= W) continue;
-        const pass = (nr === tr && nc === tc) || g[nr][nc] === 0;
-        if (!pass) continue;
-
-        for (let nd = 0; nd < 4; nd++) {
-          const nt = cur.t + (nd === cur.d ? 0 : 1);
-          if (nt > 2) continue;
-          if (visited[nr][nc][nd] <= nt) continue;
-          visited[nr][nc][nd] = nt;
-
-          const npath = [...cur.path, [nr, nc]];
-          if (nr === tr && nc === tc) return compressPath(npath);
-          q.push({ r: nr, c: nc, d: nd, t: nt, path: npath });
-        }
-      }
-      return null;
-    }
-
-    function compressPath(path) {
-      if (path.length <= 2) return path;
-      const out = [path[0]];
-      for (let i = 1; i < path.length - 1; i++) {
-        const [r0, c0] = path[i - 1];
-        const [r1, c1] = path[i];
-        const [r2, c2] = path[i + 1];
-        const d1r = r1 - r0, d1c = c1 - c0;
-        const d2r = r2 - r1, d2c = c2 - c1;
-        if (d1r !== d2r || d1c !== d2c) out.push(path[i]);
-      }
-      out.push(path[path.length - 1]);
-      return out;
-    }
-
-    function hasAnyMove() {
-      const byId = new Map();
-      board.forEach((cell, i) => {
-        if (!cell.id) return;
-        if (!byId.has(cell.id)) byId.set(cell.id, []);
-        byId.get(cell.id).push(i);
-      });
-
-      for (const list of byId.values()) {
-        for (let i = 0; i < list.length; i++) {
-          for (let j = i + 1; j < list.length; j++) {
-            const a = list[i], b = list[j];
-            const r1 = (a / COLS) | 0, c1 = a % COLS;
-            const r2 = (b / COLS) | 0, c2 = b % COLS;
-            if (findPath(r1, c1, r2, c2)) return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function shuffleRemainingUntilPlayable() {
-      const rem = board.filter(c => c.id !== 0);
-      let tries = 0;
-      do {
-        shuffle(rem);
-        let p = 0;
-        board = board.map(c => c.id === 0 ? c : rem[p++]);
-        tries++;
-      } while (!hasAnyMove() && tries < 240);
-    }
-
-    function resizeSvg() {
-      const rect = boardEl.getBoundingClientRect();
-      linesEl.setAttribute('width', rect.width);
-      linesEl.setAttribute('height', rect.height);
-      linesEl.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
-    }
-
-    function center(r, c) {
-      const tile = boardEl.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
-      const br = tile.getBoundingClientRect();
-      const pr = boardEl.getBoundingClientRect();
-      return { x: br.left - pr.left + br.width / 2, y: br.top - pr.top + br.height / 2 };
-    }
-
-    function drawPath(path) {
-      clearLines();
-      const br = boardEl.getBoundingClientRect();
-      const points = path.map(([rr, cc]) => {
-        const r = rr - 1, c = cc - 1;
-        if (r < 0) return { x: center(0, Math.max(0, Math.min(COLS - 1, c))).x, y: -4 };
-        if (r >= ROWS) return { x: center(ROWS - 1, Math.max(0, Math.min(COLS - 1, c))).x, y: br.height + 4 };
-        if (c < 0) return { x: -4, y: center(Math.max(0, Math.min(ROWS - 1, r)), 0).y };
-        if (c >= COLS) return { x: br.width + 4, y: center(Math.max(0, Math.min(ROWS - 1, r)), COLS - 1).y };
-        return center(r, c);
-      });
-
-      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-      poly.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
-      poly.setAttribute('fill', 'none');
-      poly.setAttribute('stroke', '#ffe27b');
-      poly.setAttribute('stroke-width', '5');
-      poly.setAttribute('stroke-linecap', 'round');
-      poly.setAttribute('stroke-linejoin', 'round');
-      linesEl.appendChild(poly);
-
-      setTimeout(clearLines, 160);
-    }
-
-    function clearLines() { linesEl.innerHTML = ''; }
-
-    function formatTime(ms) {
-      const s = Math.floor(ms / 1000);
-      return `${String((s / 60) | 0).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-    }
-
-    document.getElementById('restartBtn').addEventListener('click', init);
-    document.getElementById('shuffleBtn').addEventListener('click', () => {
-      shuffleRemainingUntilPlayable();
-      selected = null;
-      render();
-    });
-
-    window.addEventListener('resize', resizeSvg);
-    setInterval(() => { timeEl.textContent = formatTime(Date.now() - startTs); }, 250);
-
-    init();
-  </script>
+<script>
+const ROWS=8,COLS=8,TOTAL=64;
+const boardEl=document.getElementById('board'),linesEl=document.getElementById('lines');
+const movesEl=document.getElementById('moves'),leftEl=document.getElementById('left'),timeEl=document.getElementById('time');
+const variants=[
+ {id:'sakiko1',src:'https://static.wikia.nocookie.net/bandori/images/3/3d/Togawa_Sakiko_-_Casual_Live2D_Model.png/revision/latest?cb=20240311211835'},
+ {id:'sakiko2',src:'https://static.wikia.nocookie.net/bandori/images/5/58/Togawa_Sakiko_-_JH_Winter_Uniform_Live2D.png/revision/latest?cb=20230908201158'},
+ {id:'sakiko3',src:'https://static.wikia.nocookie.net/bandori/images/e/e6/Togawa_Sakiko_-_Summer_Uniform_Live2D.png/revision/latest?cb=20240311200637'},
+ {id:'sakiko4',src:'https://static.wikia.nocookie.net/bandori/images/0/07/Togawa_Sakiko_-_Winter_Uniform_Live2D.png/revision/latest?cb=20230908201216'},
+ {id:'sakiko5',src:'https://static.wikia.nocookie.net/bandori/images/d/df/Sakiko_Casual_Anime.png/revision/latest?cb=20241201065128'},
+ {id:'sakiko6',src:'https://static.wikia.nocookie.net/bandori/images/2/27/Sakiko_anime.png/revision/latest?cb=20230629163400'},
+ {id:'soyo1',src:'https://static.wikia.nocookie.net/bandori/images/3/3f/Nagasaki_Soyo_-_Child.png/revision/latest?cb=20240517074520'},
+ {id:'soyo2',src:'https://static.wikia.nocookie.net/bandori/images/2/25/Nagasaki_Soyo_-_Summer_Uniforn_Live2D.png/revision/latest?cb=20240311203804'},
+ {id:'soyo3',src:'https://static.wikia.nocookie.net/bandori/images/a/a0/Nagasaki_Soyo_-_Winter_Uniform_Live2D.png/revision/latest?cb=20230908201129'},
+ {id:'soyo4',src:'https://static.wikia.nocookie.net/bandori/images/2/28/Soyo_Mayoi_Neko.png/revision/latest?cb=20240704202525'},
+ {id:'soyo5',src:'https://static.wikia.nocookie.net/bandori/images/8/81/Soyo_GBP.png/revision/latest?cb=20230628090700'},
+ {id:'soyo6',src:'https://static.wikia.nocookie.net/bandori/images/b/be/Soyo_GBP-2.png/revision/latest?cb=20230628090709'},
+ {id:'sakiko7',src:'https://static.wikia.nocookie.net/bandori/images/5/58/Togawa_Sakiko_-_JH_Winter_Uniform_Live2D.png/revision/latest/scale-to-width-down/300?cb=20230908201158'},
+ {id:'soyo7',src:'https://static.wikia.nocookie.net/bandori/images/9/91/Soyo_anime.png/revision/latest?cb=20230628090504'},
+ {id:'sakiko8',src:'https://static.wikia.nocookie.net/bandori/images/e/e6/Togawa_Sakiko_-_Summer_Uniform_Live2D.png/revision/latest/scale-to-width-down/300?cb=20240311200637'},
+ {id:'soyo8',src:'https://static.wikia.nocookie.net/bandori/images/a/a0/Nagasaki_Soyo_-_Winter_Uniform_Live2D.png/revision/latest/scale-to-width-down/300?cb=20230908201129'}
+];
+let board=[],selected=null,moves=0,left=TOTAL,start=Date.now();
+const idx=(r,c)=>r*COLS+c;
+const sh=a=>{for(let i=a.length-1;i>0;i--){let j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function init(){moves=0;left=TOTAL;selected=null;start=Date.now();let deck=[];for(const v of variants)for(let i=0;i<4;i++)deck.push({id:v.id,src:v.src});board=sh(deck);if(!hasMove())reshufflePlayable();render();update();clearLines()}
+function update(){movesEl.textContent=moves;leftEl.textContent=left}
+function render(){boardEl.innerHTML='';board.forEach((cell,i)=>{const r=(i/COLS)|0,c=i%COLS;const b=document.createElement('button');b.className='tile'+(cell.id===0?' removed':'')+(selected&&selected.r===r&&selected.c===c?' sel':'');b.dataset.r=r;b.dataset.c=c;if(cell.id!==0){const im=document.createElement('img');im.src=cell.src;im.alt='角色图片';im.loading='lazy';im.onerror=()=>{im.style.background='#223';im.style.objectFit='contain';im.src='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" fill="#334"/><text x="50%" y="54%" fill="#ccd" font-size="14" text-anchor="middle">Image</text></svg>')};b.appendChild(im)}b.onclick=()=>clickCell(r,c);boardEl.appendChild(b)});resizeSvg()}
+function clickCell(r,c){const i=idx(r,c);if(board[i].id===0)return;if(!selected){selected={r,c};return render()}if(selected.r===r&&selected.c===c){selected=null;return render()}const j=idx(selected.r,selected.c);if(board[i].id!==board[j].id){selected={r,c};return render()}const path=findPath(selected.r,selected.c,r,c);if(!path){selected={r,c};return render()}moves++;drawPath(path);const p={...selected};selected=null;setTimeout(()=>{board[idx(p.r,p.c)]={id:0,src:''};board[idx(r,c)]={id:0,src:''};left-=2;update();render();if(left===0)return setTimeout(()=>alert(`通关！步数${moves}，用时${fmt(Date.now()-start)}`),50);if(!hasMove()){reshufflePlayable();render()}},130)}
+function grid(){const H=ROWS+2,W=COLS+2,g=Array.from({length:H},()=>Array(W).fill(0));for(let r=1;r<=ROWS;r++)for(let c=1;c<=COLS;c++)g[r][c]=board[idx(r-1,c-1)].id;return g}
+function findPath(r1,c1,r2,c2){const g=grid(),sr=r1+1,sc=c1+1,tr=r2+1,tc=c2+1,H=ROWS+2,W=COLS+2,dirs=[[-1,0],[0,1],[1,0],[0,-1]];const vis=Array.from({length:H},()=>Array.from({length:W},()=>Array(4).fill(99)));const q=[];for(let d=0;d<4;d++){vis[sr][sc][d]=0;q.push({r:sr,c:sc,d,t:0,path:[[sr,sc]]})}
+ while(q.length){const cur=q.shift();const [dr,dc]=dirs[cur.d],nr=cur.r+dr,nc=cur.c+dc;if(nr<0||nr>=H||nc<0||nc>=W)continue;const pass=(nr===tr&&nc===tc)||g[nr][nc]===0;if(!pass)continue;for(let nd=0;nd<4;nd++){const nt=cur.t+(nd===cur.d?0:1);if(nt>2||vis[nr][nc][nd]<=nt)continue;vis[nr][nc][nd]=nt;const np=[...cur.path,[nr,nc]];if(nr===tr&&nc===tc)return compress(np);q.push({r:nr,c:nc,d:nd,t:nt,path:np})}}
+ return null}
+function compress(p){if(p.length<=2)return p;const o=[p[0]];for(let i=1;i<p.length-1;i++){const [r0,c0]=p[i-1],[r1,c1]=p[i],[r2,c2]=p[i+1];if(r1-r0!==r2-r1||c1-c0!==c2-c1)o.push(p[i])}o.push(p[p.length-1]);return o}
+function hasMove(){const map=new Map();board.forEach((c,i)=>{if(!c.id)return; if(!map.has(c.id))map.set(c.id,[]); map.get(c.id).push(i)});for(const arr of map.values())for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){const a=arr[i],b=arr[j];if(findPath((a/COLS)|0,a%COLS,(b/COLS)|0,b%COLS))return true}return false}
+function reshufflePlayable(){const rem=board.filter(c=>c.id!==0);let t=0;do{sh(rem);let p=0;board=board.map(c=>c.id===0?c:rem[p++]);t++}while(!hasMove()&&t<300)}
+function resizeSvg(){const r=boardEl.getBoundingClientRect();linesEl.setAttribute('width',r.width);linesEl.setAttribute('height',r.height);linesEl.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`)}
+function center(r,c){const t=boardEl.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);const b=t.getBoundingClientRect(),p=boardEl.getBoundingClientRect();return{x:b.left-p.left+b.width/2,y:b.top-p.top+b.height/2}}
+function drawPath(path){clearLines();const br=boardEl.getBoundingClientRect();const pts=path.map(([rr,cc])=>{const r=rr-1,c=cc-1;if(r<0)return{x:center(0,Math.max(0,Math.min(COLS-1,c))).x,y:-4};if(r>=ROWS)return{x:center(ROWS-1,Math.max(0,Math.min(COLS-1,c))).x,y:br.height+4};if(c<0)return{x:-4,y:center(Math.max(0,Math.min(ROWS-1,r)),0).y};if(c>=COLS)return{x:br.width+4,y:center(Math.max(0,Math.min(ROWS-1,r)),COLS-1).y};return center(r,c)});const poly=document.createElementNS('http://www.w3.org/2000/svg','polyline');poly.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke','#ffe27b');poly.setAttribute('stroke-width','5');poly.setAttribute('stroke-linecap','round');poly.setAttribute('stroke-linejoin','round');linesEl.appendChild(poly);setTimeout(clearLines,160)}
+const clearLines=()=>linesEl.innerHTML='';
+const fmt=ms=>{const s=(ms/1000)|0;return String((s/60)|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+document.getElementById('restart').onclick=init;
+document.getElementById('shuffle').onclick=()=>{reshufflePlayable();selected=null;render()};
+setInterval(()=>timeEl.textContent=fmt(Date.now()-start),250);
+window.addEventListener('resize',resizeSvg);
+init();
+</script>
 </body>
 </html>
