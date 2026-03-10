@@ -3,191 +3,174 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BanG Dream! 连连看（人物版）</title>
+  <title>BanG Dream! 经典连连看（人物图片）</title>
   <style>
     :root {
-      --bg: #0f1020;
-      --panel: #1b1d36;
-      --card: #2a2d52;
-      --card-open: #444a80;
-      --ok: #52d273;
+      --bg: #101227;
+      --panel: #1a1e3d;
+      --tile: #2a2f5c;
+      --tile-border: rgba(255,255,255,.2);
       --text: #eef0ff;
-      --muted: #a8add8;
-      --accent: #ff77c8;
+      --muted: #aeb4e7;
+      --accent: #ff72c3;
+      --ok: #57d687;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-      color: var(--text);
-      background: radial-gradient(circle at 20% 10%, #272a54 0%, var(--bg) 45%);
       min-height: 100vh;
       display: grid;
       place-items: center;
-      padding: 20px;
+      padding: 18px;
+      background: radial-gradient(circle at 20% 5%, #2a2f63 0%, var(--bg) 45%);
+      color: var(--text);
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
     }
     .wrap {
       width: min(980px, 100%);
-      background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(8px);
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
     }
-    h1 {
-      margin: 0 0 10px;
-      font-size: clamp(22px, 3vw, 32px);
-    }
-    .sub { color: var(--muted); margin-bottom: 14px; }
+    h1 { margin: 0 0 8px; font-size: clamp(22px, 3vw, 30px); }
+    .sub { color: var(--muted); margin-bottom: 12px; }
     .bar {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
+      gap: 8px;
       justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .stats {
-      display: flex;
-      gap: 12px;
+      align-items: center;
       flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 14px;
+      margin-bottom: 12px;
     }
+    .stats { display: flex; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 14px; }
     .badge {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
       border-radius: 999px;
       padding: 6px 10px;
     }
+    .btns { display: flex; gap: 8px; }
     button {
-      border: 0;
+      border: none;
       border-radius: 10px;
-      padding: 10px 14px;
-      background: var(--accent);
-      color: #230018;
+      padding: 9px 13px;
       font-weight: 700;
       cursor: pointer;
-      transition: .2s ease;
     }
-    button:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    #restart { background: var(--accent); color: #260018; }
+    #shuffle { background: #7aa7ff; color: #071229; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .card {
+    .board-wrap {
       position: relative;
-      height: 88px;
+      width: fit-content;
+      margin: 0 auto;
+      padding: 6px;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: var(--card);
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 72px);
+      grid-template-rows: repeat(8, 72px);
+      gap: 6px;
+    }
+
+    .tile {
+      width: 72px;
+      height: 72px;
+      border-radius: 10px;
+      border: 1px solid var(--tile-border);
+      background: var(--tile);
+      padding: 4px;
       cursor: pointer;
-      overflow: hidden;
-      transform-style: preserve-3d;
-      transition: transform .2s ease, background .2s ease;
       display: grid;
       place-items: center;
-      text-align: center;
-      padding: 8px;
+      transition: transform .12s ease, box-shadow .12s ease, opacity .15s ease;
+    }
+    .tile:hover { transform: translateY(-1px); }
+    .tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      pointer-events: none;
       user-select: none;
+      -webkit-user-drag: none;
     }
-    .card:hover { transform: translateY(-2px); }
-    .card .front, .card .back {
+    .tile.selected {
+      box-shadow: 0 0 0 3px #ffd06d;
+      border-color: #ffd06d;
+    }
+    .tile.removed {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #lines {
       position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      padding: 8px;
-      font-size: 14px;
-      line-height: 1.25;
-      transition: opacity .15s ease;
+      inset: 6px;
+      pointer-events: none;
+      overflow: visible;
     }
-    .card .front {
-      opacity: 0;
-      background: var(--card-open);
-      font-weight: 700;
-    }
-    .card .back {
-      opacity: 1;
-      font-size: 30px;
-      color: #ffd3ef;
-    }
-    .card.open .front, .card.matched .front { opacity: 1; }
-    .card.open .back, .card.matched .back { opacity: 0; }
-    .card.matched {
-      background: rgba(82, 210, 115, .22);
-      border-color: rgba(82,210,115,.6);
-      cursor: default;
-    }
+    .tip { color: var(--muted); margin-top: 10px; font-size: 13px; }
 
-    .tips {
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    @media (max-width: 780px) {
-      .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .card { height: 76px; }
+    @media (max-width: 760px) {
+      #board { grid-template-columns: repeat(8, 44px); grid-template-rows: repeat(8, 44px); gap: 4px; }
+      .tile { width: 44px; height: 44px; padding: 2px; border-radius: 7px; }
+      .tile img { border-radius: 6px; }
+      #lines { inset: 6px; }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <h1>BanG Dream! 连连看（人物版）</h1>
-    <div class="sub">点击两张相同人物卡片即可消除，清空全部卡片获胜。</div>
+    <h1>BanG Dream! 连连看（经典连线版）</h1>
+    <div class="sub">规则：只能连接相同人物图片；路径不能穿过未消除格子，且最多 2 次拐弯。</div>
 
     <div class="bar">
       <div class="stats">
         <span class="badge">步数：<b id="moves">0</b></span>
+        <span class="badge">剩余：<b id="left">64</b></span>
         <span class="badge">用时：<b id="time">00:00</b></span>
-        <span class="badge">已配对：<b id="pairs">0</b>/<span id="totalPairs">0</span></span>
       </div>
-      <button id="restart">重新开始</button>
+      <div class="btns">
+        <button id="shuffle">重排剩余</button>
+        <button id="restart">重新开始</button>
+      </div>
     </div>
 
-    <section id="grid" class="grid"></section>
+    <div class="board-wrap" id="boardWrap">
+      <div id="board"></div>
+      <svg id="lines"></svg>
+    </div>
 
-    <div class="tips">注：这是“翻牌配对”版连连看。若你想要“必须路径可连（最多两拐点）”的经典连连看，我可以再给你升级成完整版规则。</div>
+    <div class="tip">图案使用 BanG Dream 人物头像图标（Bestdori 资源链接）。</div>
   </main>
 
   <script>
-    const members = [
-      "户山香澄", "花园多惠", "牛込里美", "山吹沙绫", "市谷有咲",
-      "美竹兰", "青叶摩卡", "上原绯玛丽", "宇田川巴", "羽泽鸫",
-      "丸山彩", "冰川日菜", "白鹭千圣", "大和麻弥", "若宫伊芙",
-      "凑友希那", "今井莉莎", "宇田川亚子", "白金燐子", "冰川纱夜"
-    ];
+    const ROWS = 8, COLS = 8;
+    const TOTAL = ROWS * COLS;
+    const PAIRS = TOTAL / 2;
 
-    const pickCount = 12; // 12 对，共 24 张
-    const picked = shuffle([...members]).slice(0, pickCount);
+    const imagePool = Array.from({ length: 40 }, (_, i) => `https://bestdori.com/res/icon/chara_icon_${i + 1}.png`);
 
-    const deck = shuffle([...picked, ...picked]).map((name, i) => ({
-      id: i + "-" + Math.random().toString(36).slice(2),
-      name,
-      open: false,
-      matched: false
-    }));
-
-    const grid = document.getElementById('grid');
+    const boardEl = document.getElementById('board');
+    const linesEl = document.getElementById('lines');
     const movesEl = document.getElementById('moves');
+    const leftEl = document.getElementById('left');
     const timeEl = document.getElementById('time');
-    const pairsEl = document.getElementById('pairs');
-    const totalPairsEl = document.getElementById('totalPairs');
     const restartBtn = document.getElementById('restart');
+    const shuffleBtn = document.getElementById('shuffle');
 
+    let board = []; // 0 empty, >0 icon id
+    let selected = null;
     let moves = 0;
-    let pairs = 0;
-    let first = null;
-    let second = null;
-    let lock = false;
+    let left = TOTAL;
     let startTs = Date.now();
-
-    totalPairsEl.textContent = pickCount;
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -204,77 +187,276 @@
       return `${m}:${s}`;
     }
 
-    function render() {
-      grid.innerHTML = '';
-      deck.forEach((card, idx) => {
-        const el = document.createElement('button');
-        el.className = `card ${card.open ? 'open' : ''} ${card.matched ? 'matched' : ''}`;
-        el.disabled = card.matched;
-        el.setAttribute('aria-label', card.open || card.matched ? card.name : '未翻开的卡片');
-        el.innerHTML = `
-          <span class="front">${card.name}</span>
-          <span class="back">🎸</span>
-        `;
-        el.addEventListener('click', () => onCardClick(idx));
-        grid.appendChild(el);
+    function idx(r, c) { return r * COLS + c; }
+
+    function initGame() {
+      selected = null;
+      moves = 0;
+      left = TOTAL;
+      startTs = Date.now();
+
+      const pickedIcons = shuffle([...imagePool]).slice(0, PAIRS);
+      const pairItems = shuffle([...pickedIcons, ...pickedIcons]);
+
+      const idMap = new Map();
+      let idCounter = 1;
+      board = pairItems.map(src => {
+        if (!idMap.has(src)) idMap.set(src, idCounter++);
+        return { src, id: idMap.get(src) };
       });
-      movesEl.textContent = moves;
-      pairsEl.textContent = pairs;
+
+      if (!hasAnyMove()) shuffleRemainingUntilPlayable();
+      render();
+      updateStats();
+      clearLines();
     }
 
-    function onCardClick(idx) {
-      const card = deck[idx];
-      if (lock || card.open || card.matched) return;
+    function render() {
+      boardEl.innerHTML = '';
+      board.forEach((cell, i) => {
+        const r = Math.floor(i / COLS);
+        const c = i % COLS;
+        const btn = document.createElement('button');
+        btn.className = 'tile' + (cell.id === 0 ? ' removed' : '');
+        btn.dataset.r = r;
+        btn.dataset.c = c;
+        if (selected && selected.r === r && selected.c === c) btn.classList.add('selected');
 
-      card.open = true;
-      render();
+        if (cell.id !== 0) {
+          const img = document.createElement('img');
+          img.src = cell.src;
+          img.alt = '人物图片';
+          btn.appendChild(img);
+        }
 
-      if (!first) {
-        first = idx;
+        btn.addEventListener('click', () => onTileClick(r, c));
+        boardEl.appendChild(btn);
+      });
+      resizeSvg();
+    }
+
+    function updateStats() {
+      movesEl.textContent = moves;
+      leftEl.textContent = left;
+    }
+
+    function onTileClick(r, c) {
+      const i = idx(r, c);
+      const cell = board[i];
+      if (cell.id === 0) return;
+
+      if (!selected) {
+        selected = { r, c };
+        render();
         return;
       }
 
-      second = idx;
+      if (selected.r === r && selected.c === c) {
+        selected = null;
+        render();
+        return;
+      }
+
+      const a = board[idx(selected.r, selected.c)];
+      const b = board[i];
+
+      if (a.id !== b.id) {
+        selected = { r, c };
+        render();
+        return;
+      }
+
+      const path = findPath(selected.r, selected.c, r, c);
+      if (!path) {
+        selected = { r, c };
+        render();
+        return;
+      }
+
       moves++;
-      lock = true;
+      drawPath(path);
 
-      const a = deck[first];
-      const b = deck[second];
+      const old = { ...selected };
+      selected = null;
 
-      if (a.name === b.name) {
-        a.matched = b.matched = true;
-        pairs++;
-        resetTurn();
+      setTimeout(() => {
+        board[idx(old.r, old.c)] = { id: 0, src: '' };
+        board[idx(r, c)] = { id: 0, src: '' };
+        left -= 2;
+        updateStats();
         render();
 
-        if (pairs === pickCount) {
-          setTimeout(() => {
-            alert(`完成！你用了 ${moves} 步，耗时 ${formatTime(Date.now() - startTs)}。`);
-          }, 100);
+        if (left === 0) {
+          setTimeout(() => alert(`通关！步数 ${moves}，用时 ${formatTime(Date.now() - startTs)}`), 80);
+          return;
         }
-      } else {
-        setTimeout(() => {
-          a.open = false;
-          b.open = false;
-          resetTurn();
+
+        if (!hasAnyMove()) {
+          shuffleRemainingUntilPlayable();
           render();
-        }, 650);
+        }
+      }, 160);
+    }
+
+    function buildGridWithBorder() {
+      const H = ROWS + 2, W = COLS + 2;
+      const g = Array.from({ length: H }, () => Array(W).fill(0));
+      for (let r = 1; r <= ROWS; r++) {
+        for (let c = 1; c <= COLS; c++) {
+          g[r][c] = board[idx(r - 1, c - 1)].id;
+        }
       }
+      return g;
     }
 
-    function resetTurn() {
-      first = null;
-      second = null;
-      lock = false;
+    function findPath(r1, c1, r2, c2) {
+      // BFS over (r,c,dir,turns), max turns = 2
+      const g = buildGridWithBorder();
+      const sr = r1 + 1, sc = c1 + 1, tr = r2 + 1, tc = c2 + 1;
+      const H = ROWS + 2, W = COLS + 2;
+      const dirs = [[-1,0],[0,1],[1,0],[0,-1]];
+
+      const visited = Array.from({ length: H }, () => Array.from({ length: W }, () => Array(4).fill(99)));
+      const queue = [];
+
+      for (let d = 0; d < 4; d++) {
+        visited[sr][sc][d] = 0;
+        queue.push({ r: sr, c: sc, d, t: 0, path: [[sr, sc]] });
+      }
+
+      while (queue.length) {
+        const cur = queue.shift();
+        const [dr, dc] = dirs[cur.d];
+        const nr = cur.r + dr, nc = cur.c + dc;
+        if (nr < 0 || nr >= H || nc < 0 || nc >= W) continue;
+
+        const passable = (nr === tr && nc === tc) || g[nr][nc] === 0;
+        if (!passable) continue;
+
+        for (let nd = 0; nd < 4; nd++) {
+          const nt = cur.t + (nd === cur.d ? 0 : 1);
+          if (nt > 2) continue;
+
+          if (visited[nr][nc][nd] <= nt) continue;
+          visited[nr][nc][nd] = nt;
+
+          const npath = [...cur.path, [nr, nc]];
+          if (nr === tr && nc === tc) {
+            return compressPath(npath);
+          }
+
+          queue.push({ r: nr, c: nc, d: nd, t: nt, path: npath });
+        }
+      }
+      return null;
     }
 
-    restartBtn.addEventListener('click', () => location.reload());
+    function compressPath(path) {
+      // Keep only turning points
+      if (path.length <= 2) return path;
+      const out = [path[0]];
+      for (let i = 1; i < path.length - 1; i++) {
+        const [r0, c0] = path[i - 1];
+        const [r1, c1] = path[i];
+        const [r2, c2] = path[i + 1];
+        const d1 = [r1 - r0, c1 - c0];
+        const d2 = [r2 - r1, c2 - c1];
+        if (d1[0] !== d2[0] || d1[1] !== d2[1]) out.push(path[i]);
+      }
+      out.push(path[path.length - 1]);
+      return out;
+    }
+
+    function hasAnyMove() {
+      const positionsById = new Map();
+      board.forEach((cell, i) => {
+        if (!cell.id) return;
+        if (!positionsById.has(cell.id)) positionsById.set(cell.id, []);
+        positionsById.get(cell.id).push(i);
+      });
+
+      for (const [, list] of positionsById) {
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const a = list[i], b = list[j];
+            const r1 = Math.floor(a / COLS), c1 = a % COLS;
+            const r2 = Math.floor(b / COLS), c2 = b % COLS;
+            if (findPath(r1, c1, r2, c2)) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function shuffleRemainingUntilPlayable() {
+      const remain = board.filter(c => c.id !== 0);
+      let tries = 0;
+      do {
+        shuffle(remain);
+        let p = 0;
+        board = board.map(c => (c.id === 0 ? c : remain[p++]));
+        tries++;
+      } while (!hasAnyMove() && tries < 200);
+    }
+
+    function resizeSvg() {
+      const rect = boardEl.getBoundingClientRect();
+      linesEl.setAttribute('width', rect.width);
+      linesEl.setAttribute('height', rect.height);
+      linesEl.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+    }
+
+    function cellCenter(r, c) {
+      const tile = boardEl.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
+      if (!tile) return { x: 0, y: 0 };
+      const b = tile.getBoundingClientRect();
+      const p = boardEl.getBoundingClientRect();
+      return { x: b.left - p.left + b.width / 2, y: b.top - p.top + b.height / 2 };
+    }
+
+    function drawPath(path) {
+      clearLines();
+      const points = path.map(([rr, cc]) => {
+        const r = rr - 1, c = cc - 1;
+        // Border points: place just outside board
+        if (r < 0) return { x: cellCenter(0, Math.max(0, Math.min(COLS - 1, c))).x, y: -4 };
+        if (r >= ROWS) return { x: cellCenter(ROWS - 1, Math.max(0, Math.min(COLS - 1, c))).x, y: boardEl.getBoundingClientRect().height + 4 };
+        if (c < 0) return { x: -4, y: cellCenter(Math.max(0, Math.min(ROWS - 1, r)), 0).y };
+        if (c >= COLS) return { x: boardEl.getBoundingClientRect().width + 4, y: cellCenter(Math.max(0, Math.min(ROWS - 1, r)), COLS - 1).y };
+        return cellCenter(r, c);
+      });
+
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      poly.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+      poly.setAttribute('fill', 'none');
+      poly.setAttribute('stroke', '#ffe27a');
+      poly.setAttribute('stroke-width', '5');
+      poly.setAttribute('stroke-linecap', 'round');
+      poly.setAttribute('stroke-linejoin', 'round');
+      poly.setAttribute('opacity', '0.95');
+      linesEl.appendChild(poly);
+
+      setTimeout(clearLines, 180);
+    }
+
+    function clearLines() { linesEl.innerHTML = ''; }
+
+    restartBtn.addEventListener('click', initGame);
+    shuffleBtn.addEventListener('click', () => {
+      shuffleRemainingUntilPlayable();
+      selected = null;
+      render();
+    });
+
+    window.addEventListener('resize', () => {
+      resizeSvg();
+    });
 
     setInterval(() => {
       timeEl.textContent = formatTime(Date.now() - startTs);
     }, 250);
 
-    render();
+    initGame();
   </script>
 </body>
 </html>
