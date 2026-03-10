@@ -66,33 +66,57 @@
   function init(){
     game.innerHTML='';
     const pEl=mk('player',`<img src="${ksm}">`);
-    g={score:0,hp:5,mode:'普通',buffUntil:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,over:false};
+    g={score:0,hp:5,mode:'普通',buffType:null,buffUntil:0,shield:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,over:false};
     hud();
   }
 
-  function hud(){scoreEl.textContent=g.score;hpEl.textContent=g.hp;pxEl.textContent=Math.round(g.player.x);modeEl.textContent=g.mode;const left=Math.max(0,g.buffUntil-g.t);buffEl.textContent=left.toFixed(1)+'s';}
+  function hud(){scoreEl.textContent=g.score;hpEl.textContent=g.hp;pxEl.textContent=Math.round(g.player.x);modeEl.textContent=g.mode+(g.shield>0?`(盾${g.shield})`:'' );const left=Math.max(0,g.buffUntil-g.t);buffEl.textContent=left.toFixed(1)+'s';}
 
   function addEnemy(){
     const el=mk('enemy',`<img src="${pool[(Math.random()*pool.length)|0]}">`);
     g.en.push({x:40+Math.random()*(W-80),y:-30,vx:(Math.random()*100-50),vy:80+Math.random()*60,hp:2,el,fire:0.8+Math.random()*1.2});
   }
   function addBullet(){
-    const powered = g.t < g.buffUntil;
-    if(powered){
+    const active = g.t < g.buffUntil ? g.buffType : null;
+    if(active==='guitar'){
       for(const dx of [-16,0,16]){
         const el=mk('bullet');
         el.style.background = dx===0 ? '#7dffcf' : '#ffb7ff';
         el.style.width = dx===0 ? '12px' : '8px';
         el.style.height = dx===0 ? '18px' : '14px';
-        g.bul.push({x:g.player.x+dx,y:g.player.y-28,vx:dx*3,vy:-560,el,powered:true});
+        g.bul.push({x:g.player.x+dx,y:g.player.y-28,vx:dx*3,vy:-560,el,dmg:1,pierce:0,homing:false});
       }
+    }else if(active==='keyboard'){
+      const el=mk('bullet');
+      el.style.background='#8ff'; el.style.width='18px'; el.style.height='26px';
+      g.bul.push({x:g.player.x,y:g.player.y-30,vx:0,vy:-700,el,dmg:2,pierce:3,homing:false});
+    }else if(active==='drum'){
+      const el=mk('bullet');
+      el.style.background='#ffd27f'; el.style.width='14px'; el.style.height='14px';
+      g.bul.push({x:g.player.x,y:g.player.y-28,vx:0,vy:-520,el,dmg:2,pierce:0,homing:false});
+    }else if(active==='bass'){
+      for(const dx of [-8,8]){
+        const el=mk('bullet');
+        el.style.background='#b0ff8f'; el.style.width='10px'; el.style.height='16px';
+        g.bul.push({x:g.player.x+dx,y:g.player.y-28,vx:dx*2,vy:-560,el,dmg:1,pierce:0,homing:false});
+      }
+    }else if(active==='violin'){
+      const el=mk('bullet');
+      el.style.background='#ff9fd6'; el.style.width='10px'; el.style.height='18px';
+      g.bul.push({x:g.player.x,y:g.player.y-28,vx:0,vy:-480,el,dmg:1,pierce:0,homing:true});
     }else{
       const el=mk('bullet');
-      g.bul.push({x:g.player.x,y:g.player.y-28,vx:0,vy:-500,el,powered:false});
+      g.bul.push({x:g.player.x,y:g.player.y-28,vx:0,vy:-500,el,dmg:1,pierce:0,homing:false});
     }
   }
   function addEB(x,y,vx,vy){const el=mk('eb');g.eb.push({x,y,vx,vy,el});}
-  function addDrop(x,y){const el=mk('drop','🎸');g.drop.push({x,y,vy:90,el});}
+  function addDrop(x,y){
+    const pool=['guitar','keyboard','drum','bass','violin'];
+    const kind=pool[(Math.random()*pool.length)|0];
+    const icon={guitar:'🎸',keyboard:'🎹',drum:'🥁',bass:'🪕',violin:'🎻'}[kind];
+    const el=mk('drop',icon);
+    g.drop.push({x,y,vy:90,el,kind});
+  }
 
   function hit(a,b,ra=18,rb=18){const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy<=(ra+rb)*(ra+rb)}
 
@@ -105,22 +129,50 @@
     g.player.x=Math.max(24,Math.min(W-24,g.player.x));
     g.player.y=Math.max(40,Math.min(H-24,g.player.y));
 
-    if(g.t>=g.buffUntil && g.mode!=='普通') g.mode='普通';
+    if(g.t>=g.buffUntil && g.mode!=='普通'){ g.mode='普通'; g.buffType=null; }
+    const active = g.t < g.buffUntil ? g.buffType : null;
     g.spawn-=dt; if(g.spawn<=0){addEnemy(); g.spawn=0.55;}
-    g.shoot-=dt; if((autoFire||keys.has(' '))&&g.shoot<=0){addBullet(); g.shoot=(g.t<g.buffUntil?0.11:0.16);}
+    g.shoot-=dt; if((autoFire||keys.has(' '))&&g.shoot<=0){
+      addBullet();
+      g.shoot = active==='keyboard' ? 0.22 : active ? 0.11 : 0.16;
+    }
 
-    for(const e of g.en){e.x+=e.vx*dt;e.y+=e.vy*dt;if(e.x<20||e.x>W-20)e.vx*=-1;e.fire-=dt;if(e.fire<=0){e.fire=1.2;const dx=g.player.x-e.x,dy=g.player.y-e.y,l=Math.hypot(dx,dy)||1;addEB(e.x,e.y,dx/l*180,dy/l*180)}}
-    for(const b of g.bul){b.x+=(b.vx||0)*dt;b.y+=b.vy*dt;}
-    for(const b of g.eb){b.x+=b.vx*dt;b.y+=b.vy*dt;}
+    const enemySlow = active==='bass' ? 0.6 : 1;
+    for(const e of g.en){e.x+=e.vx*dt*enemySlow;e.y+=e.vy*dt*enemySlow;if(e.x<20||e.x>W-20)e.vx*=-1;e.fire-=dt;if(e.fire<=0){e.fire=1.2;const dx=g.player.x-e.x,dy=g.player.y-e.y,l=Math.hypot(dx,dy)||1;addEB(e.x,e.y,dx/l*180,dy/l*180)}}
+    for(const b of g.bul){
+      if(b.homing && g.en.length){
+        let t=null,md=1e9; for(const e of g.en){const d=(e.x-b.x)**2+(e.y-b.y)**2; if(d<md){md=d;t=e;}}
+        if(t){ b.vx += Math.sign(t.x-b.x)*24*dt; }
+      }
+      b.x+=(b.vx||0)*dt;b.y+=b.vy*dt;
+    }
+    for(const b of g.eb){b.x+=b.vx*dt*enemySlow;b.y+=b.vy*dt*enemySlow;}
     for(const d of g.drop)d.y+=d.vy*dt;
 
     for(const b of g.bul){
       for(const e of g.en){
-        if(e.hp>0 && hit(b,e,8,20)){e.hp--;b.dead=true; if(e.hp<=0){e.dead=true;g.score+=10;if(Math.random()<0.25)addDrop(e.x,e.y);}}
+        if(e.hp>0 && hit(b,e,7,16)){
+          e.hp-=(b.dmg||1);
+          if((b.pierce||0)>0){ b.pierce--; } else { b.dead=true; }
+          if(e.hp<=0){e.dead=true;g.score+=10;if(Math.random()<0.25)addDrop(e.x,e.y);} 
+        }
       }
     }
-    for(const b of g.eb) if(hit(b,g.player,8,22)){b.dead=true;g.hp--; if(g.hp<=0)g.over=true;}
-    for(const d of g.drop) if(hit(d,g.player,16,22)){d.dead=true;g.mode='奇形怪状';g.buffUntil=Math.max(g.buffUntil,g.t)+8;}
+    for(const b of g.eb) if(hit(b,g.player,6,14)){
+      b.dead=true;
+      if(g.shield>0) g.shield--; else g.hp--;
+      if(g.hp<=0)g.over=true;
+    }
+    for(const d of g.drop) if(hit(d,g.player,16,14)){
+      d.dead=true;
+      g.buffUntil=Math.max(g.buffUntil,g.t)+8;
+      g.buffType=d.kind;
+      if(d.kind==='guitar'){ g.mode='吉他散射'; }
+      else if(d.kind==='keyboard'){ g.mode='键盘激光'; }
+      else if(d.kind==='drum'){ g.mode='鼓点护盾'; g.shield=Math.min(5,g.shield+3); }
+      else if(d.kind==='bass'){ g.mode='贝斯减速'; }
+      else if(d.kind==='violin'){ g.mode='小提琴追踪'; }
+    }
 
     g.en=g.en.filter(e=>!e.dead&&e.y<H+40);
     g.bul=g.bul.filter(b=>!b.dead&&b.y>-30);
