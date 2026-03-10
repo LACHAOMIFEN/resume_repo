@@ -14,7 +14,7 @@
     #restart{background:#ff7ac6;color:#260018}
     #game{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #ffffff24;
       background:
-      linear-gradient(rgba(4,6,14,.72), rgba(4,6,14,.78)),
+      linear-gradient(rgba(3,5,12,.84), rgba(3,5,12,.9)),
       url('https://static.wikia.nocookie.net/bandori/images/1/14/MyGO%21%21%21%21%21.jpeg/revision/latest?cb=20230527094206') center/cover no-repeat,
       radial-gradient(circle at 20% 10%, #233a7a 0%, #121a3e 40%, #090d19 100%);
     }
@@ -83,14 +83,14 @@
   const YUKINA_FLASH_IMG='https://static.wikia.nocookie.net/bandori/images/5/5e/Minato_Yukina_-_Summer_Uniform_Live2D.png/revision/latest?cb=20230823090436';
 
   // ===== 资源接口（你上传后填这里） =====
-  const GAME_BG_URL=''; // 例如: './assets/bg-dark.jpg'
+  const GAME_BG_URL='./source/img_game_6th.jpg';
   const KSM_VOICE_URL=''; // 例如: './assets/ksm-voice.mp3'
   const ITEM_SFX_URL={
-    guitar:'',   // 例如 './assets/sfx-guitar.mp3'
-    keyboard:'',
-    drum:'',
-    bass:'',
-    violin:''
+    guitar:'./source/167802__menegass__nord-drum-zip_1.wav',
+    keyboard:'./source/167802__menegass__nord-drum-zip_1.wav',
+    drum:'./source/167802__menegass__nord-drum-zip_1.wav',
+    bass:'./source/167802__menegass__nord-drum-zip_1.wav',
+    violin:'./source/167802__menegass__nord-drum-zip_1.wav'
   };
 
   let g,keys=new Set(),holdL=false,holdR=false,holdU=false,holdD=false,autoFire=true;
@@ -102,7 +102,7 @@
   const place=(el,x,y)=>{el.style.left=(x*sx())+'px';el.style.top=(y*sy())+'px';};
   function applyBackground(){
     if(!GAME_BG_URL) return;
-    game.style.background = `linear-gradient(rgba(4,6,14,.72), rgba(4,6,14,.78)), url('${GAME_BG_URL}') center/cover no-repeat, radial-gradient(circle at 20% 10%, #233a7a 0%, #121a3e 40%, #090d19 100%)`;
+    game.style.background = `linear-gradient(rgba(3,5,12,.84), rgba(3,5,12,.9)), url('${GAME_BG_URL}') center/cover no-repeat, radial-gradient(circle at 20% 10%, #233a7a 0%, #121a3e 40%, #090d19 100%)`;
   }
   function playItemSfx(kind){
     const u=ITEM_SFX_URL[kind];
@@ -114,11 +114,32 @@
     game.innerHTML='';
     applyBackground();
     const pEl=mk('player',`<img src="${ksm}">`);
-    g={score:0,hp:5,mode:'普通',buffType:null,buffUntil:0,shield:0,yukina:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,eliteCd:7,over:false};
+    g={score:0,hp:5,mode:'普通',buffs:[],shield:0,yukina:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,eliteCd:7,over:false};
     hud();
   }
 
-  function hud(){scoreEl.textContent=g.score;hpEl.textContent=g.hp;pxEl.textContent=Math.round(g.player.x);modeEl.textContent=g.mode+(g.shield>0?`(盾${g.shield})`:'' );const left=Math.max(0,g.buffUntil-g.t);buffEl.textContent=left.toFixed(1)+'s';yukinaEl.textContent=Math.min(100,Math.floor(g.yukina))+'%';}
+  function activeBuffs(){
+    g.buffs = g.buffs.filter(b=>b.until>g.t);
+    return g.buffs;
+  }
+  function buffCount(kind){
+    return activeBuffs().filter(b=>b.kind===kind).length;
+  }
+  function maxBuffLeft(){
+    const arr=activeBuffs();
+    if(!arr.length) return 0;
+    return Math.max(...arr.map(b=>b.until-g.t));
+  }
+  function hud(){
+    scoreEl.textContent=g.score;
+    hpEl.textContent=g.hp;
+    pxEl.textContent=Math.round(g.player.x);
+    const total=activeBuffs().length;
+    const modeText = total?`叠加${total}/5`:(g.mode||'普通');
+    modeEl.textContent=modeText+(g.shield>0?`(盾${g.shield})`:'' );
+    buffEl.textContent=maxBuffLeft().toFixed(1)+'s';
+    yukinaEl.textContent=Math.min(100,Math.floor(g.yukina))+'%';
+  }
 
   function addEnemy(){
     const el=mk('enemy',`<img src="${pool[(Math.random()*pool.length)|0]}">`);
@@ -129,36 +150,36 @@
     g.en.push({x:120+Math.random()*(W-240),y:66,vx:(Math.random()<0.5?-1:1)*85,vy:0,hp:22,elite:true,el,fire:0.45});
   }
   function addBullet(){
-    const active = g.t < g.buffUntil ? g.buffType : null;
-    if(active==='guitar'){
-      for(const dx of [-16,0,16]){
-        const el=mk('bullet');
-        el.style.background = dx===0 ? '#7dffcf' : '#ffb7ff';
-        el.style.width = dx===0 ? '12px' : '8px';
-        el.style.height = dx===0 ? '18px' : '14px';
-        g.bul.push({x:g.player.x+dx,y:g.player.y-28,vx:dx*3,vy:-560,el,dmg:1,pierce:0,homing:false});
-      }
-    }else if(active==='keyboard'){
+    const gtr=buffCount('guitar');
+    const key=buffCount('keyboard');
+    const drm=buffCount('drum');
+    const bas=buffCount('bass');
+    const vio=buffCount('violin');
+
+    const spread=Math.min(7,1+gtr*2);
+    const pierce=key>0?(1+key):0;
+    const dmg=1+key+(drm>0?1:0);
+    const homing=vio>0;
+    const speed=500 + key*60 + (gtr>0?40:0);
+    const baseColor= key>0 ? '#8ff' : gtr>0 ? '#ffb7ff' : bas>0 ? '#b0ff8f' : '#ffe46f';
+
+    for(let i=0;i<spread;i++){
+      const offset=i-(spread-1)/2;
       const el=mk('bullet');
-      el.style.background='#8ff'; el.style.width='18px'; el.style.height='26px';
-      g.bul.push({x:g.player.x,y:g.player.y-30,vx:0,vy:-700,el,dmg:2,pierce:3,homing:false});
-    }else if(active==='drum'){
-      const el=mk('bullet');
-      el.style.background='#ffd27f'; el.style.width='14px'; el.style.height='14px';
-      g.bul.push({x:g.player.x,y:g.player.y-28,vx:0,vy:-520,el,dmg:2,pierce:0,homing:false});
-    }else if(active==='bass'){
-      for(const dx of [-8,8]){
-        const el=mk('bullet');
-        el.style.background='#b0ff8f'; el.style.width='10px'; el.style.height='16px';
-        g.bul.push({x:g.player.x+dx,y:g.player.y-28,vx:dx*2,vy:-560,el,dmg:1,pierce:0,homing:false});
-      }
-    }else if(active==='violin'){
-      const el=mk('bullet');
-      el.style.background='#ff9fd6'; el.style.width='10px'; el.style.height='18px';
-      g.bul.push({x:g.player.x,y:g.player.y-28,vx:0,vy:-480,el,dmg:1,pierce:0,homing:true});
-    }else{
-      const el=mk('bullet');
-      g.bul.push({x:g.player.x,y:g.player.y-28,vx:0,vy:-500,el,dmg:1,pierce:0,homing:false});
+      el.style.background=baseColor;
+      el.style.width=(key>0?12:8)+'px';
+      el.style.height=(key>0?20:14)+'px';
+      g.bul.push({
+        x:g.player.x+offset*10,
+        y:g.player.y-28,
+        vx:offset*48,
+        vy:-speed,
+        el,
+        dmg,
+        pierce,
+        homing,
+        homingPower:18+vio*12
+      });
     }
   }
   function addEB(x,y,vx,vy){const el=mk('eb');g.eb.push({x,y,vx,vy,el});}
@@ -267,18 +288,20 @@
     g.player.x=Math.max(24,Math.min(W-24,g.player.x));
     g.player.y=Math.max(40,Math.min(H-24,g.player.y));
 
-    if(g.t>=g.buffUntil && g.mode!=='普通'){ g.mode='普通'; g.buffType=null; }
-    const active = g.t < g.buffUntil ? g.buffType : null;
+    activeBuffs();
+    const key=buffCount('keyboard');
+    const bas=buffCount('bass');
+
     g.spawn-=dt; if(g.spawn<=0){addEnemy(); g.spawn=0.55;}
     g.eliteCd-=dt;
     if(g.eliteCd<=0 && !g.en.some(e=>e.elite && e.hp>0)){ addElite(); g.eliteCd=14; }
 
     g.shoot-=dt; if((autoFire||keys.has(' '))&&g.shoot<=0){
       addBullet();
-      g.shoot = active==='keyboard' ? 0.22 : active ? 0.11 : 0.16;
+      g.shoot = Math.max(0.08, 0.16 - key*0.015);
     }
 
-    const enemySlow = active==='bass' ? 0.6 : 1;
+    const enemySlow = Math.max(0.45, 1 - bas*0.12);
     for(const e of g.en){
       if(e.elite){
         e.x+=e.vx*dt*enemySlow;
@@ -301,7 +324,7 @@
     for(const b of g.bul){
       if(b.homing && g.en.length){
         let t=null,md=1e9; for(const e of g.en){const d=(e.x-b.x)**2+(e.y-b.y)**2; if(d<md){md=d;t=e;}}
-        if(t){ b.vx += Math.sign(t.x-b.x)*24*dt; }
+        if(t){ b.vx += Math.sign(t.x-b.x)*(b.homingPower||24)*dt; }
       }
       b.x+=(b.vx||0)*dt;b.y+=b.vy*dt;
     }
@@ -331,13 +354,10 @@
     for(const d of g.drop) if(hit(d,g.player,16,14)){
       d.dead=true;
       playItemSfx(d.kind);
-      g.buffUntil=Math.max(g.buffUntil,g.t)+8;
-      g.buffType=d.kind;
-      if(d.kind==='guitar'){ g.mode='吉他散射'; }
-      else if(d.kind==='keyboard'){ g.mode='键盘激光'; }
-      else if(d.kind==='drum'){ g.mode='鼓点护盾'; g.shield=Math.min(5,g.shield+3); }
-      else if(d.kind==='bass'){ g.mode='贝斯减速'; }
-      else if(d.kind==='violin'){ g.mode='小提琴追踪'; g.yukina=Math.min(100,g.yukina+22); }
+      if(g.buffs.length>=5) g.buffs.sort((a,b)=>a.until-b.until).shift();
+      g.buffs.push({kind:d.kind, until:g.t+8});
+      if(d.kind==='drum') g.shield=Math.min(5,g.shield+3);
+      if(d.kind==='violin') g.yukina=Math.min(100,g.yukina+22);
     }
 
     g.en=g.en.filter(e=>!e.dead&&e.y<H+40);
