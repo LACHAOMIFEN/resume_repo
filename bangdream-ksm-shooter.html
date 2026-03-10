@@ -24,6 +24,7 @@
         <span>生命 <b id="hp">5</b></span>
         <span>模式 <b id="mode">普通</b></span>
         <span>必杀 <b id="ult">0%</b></span>
+        <span>帧 <b id="fpsTick">0</b></span>
       </div>
       <button id="restartBtn">重开</button>
     </div>
@@ -45,6 +46,7 @@
   const restartBtn=document.getElementById('restartBtn');
   const autoBtn=document.getElementById('autoBtn');
   const ultBtn=document.getElementById('ultBtn');
+  const fpsTickEl=document.getElementById('fpsTick');
 
   const ksm='https://bestdori.com/res/icon/chara_icon_1.png';
   const enemies=Array.from({length:39},(_,i)=>`https://bestdori.com/res/icon/chara_icon_${i+2}.png`);
@@ -53,7 +55,7 @@
   const rand=(a,b)=>Math.random()*(b-a)+a;
   const pick=(arr)=>arr[(Math.random()*arr.length)|0];
 
-  let g,keys=new Set(),drag=false,dragX=W/2,autoFire=true;
+  let g,keys=new Set(),drag=false,dragX=W/2,autoFire=true,tick=0,demoX=0,demoDir=1;
 
   function init(){
     g={score:0,hp:5,ult:0,t:0,over:false,spawn:0,shootCd:0,nextBoss:180,
@@ -61,6 +63,7 @@
       mode:{type:'normal',until:0},
       bullets:[],enemyBullets:[],foes:[],drops:[],fx:[],boss:null
     };
+    tick=0; demoX=20; demoDir=1;
     updateHUD();
   }
 
@@ -70,6 +73,7 @@
     ultEl.textContent=Math.floor(Math.min(100,g.ult))+'%';
     modeEl.textContent={normal:'普通',guitar:'吉他',bread:'面包',chaos:'混沌'}[g.mode.type];
     autoBtn.textContent='自动开火: '+(autoFire?'开':'关');
+    fpsTickEl.textContent=tick;
   }
 
   const hit=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y,r=(a.r||0)+(b.r||0);return dx*dx+dy*dy<=r*r};
@@ -115,6 +119,10 @@
 
   function step(dt){
     g.t+=dt;
+    tick++;
+    demoX += demoDir * 180 * dt;
+    if(demoX > W-20){ demoX=W-20; demoDir=-1; }
+    if(demoX < 20){ demoX=20; demoDir=1; }
     const now=performance.now()/1000;
     if(g.mode.type!=='normal'&&now>g.mode.until){g.mode.type='normal';updateHUD();}
 
@@ -177,7 +185,9 @@
 
   function render(){
     ctx.clearRect(0,0,W,H);
-    for(let i=0;i<70;i++){const sx=(i*137+g.t*70*(i%3+1))%W,sy=(i*79+g.t*36*(i%5+1))%H;ctx.fillStyle=`rgba(255,255,255,${0.1+(i%5)*0.05})`;ctx.fillRect(sx,sy,2,2);}
+    for(let i=0;i<70;i++){const sx=(i*137+g.t*70*(i%3+1))%W,sy=(i*79+g.t*36*(i%5+1))%H;ctx.fillStyle=`rgba(255,255,255,${0.1+(i%5)*0.05})`;ctx.fillRect(sx,sy,2,2);} 
+    ctx.fillStyle='#7dffcf';
+    ctx.fillRect(demoX-8, 18, 16, 8);
 
     drawShip(g.player.x,g.player.y,1.2,'#ff74c6');
     drawAvatar(g.player.img,g.player.x,g.player.y-3,11);
@@ -194,7 +204,7 @@
   }
 
   let last=performance.now();
-  function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;if(g&&!g.over)step(dt);if(g)render();requestAnimationFrame(loop);}
+  function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;if(g&&!g.over)step(dt);if(g)render();}
 
   function toGameX(clientX){const r=canvas.getBoundingClientRect();return (clientX-r.left)/r.width*W;}
   canvas.addEventListener('pointerdown',e=>{drag=true;dragX=toGameX(e.clientX);canvas.setPointerCapture(e.pointerId);});
@@ -210,7 +220,10 @@
   ultBtn.onclick=castUlt;
 
   init();
-  requestAnimationFrame(loop);
+  // 双通道驱动：rAF + setInterval，避免某些内嵌浏览器里动画被冻结
+  function rafTick(ts){ loop(ts); requestAnimationFrame(rafTick); }
+  requestAnimationFrame(rafTick);
+  setInterval(()=>loop(performance.now()),16);
 })();
 </script>
 </body>
