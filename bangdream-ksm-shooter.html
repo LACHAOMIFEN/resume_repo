@@ -83,7 +83,9 @@
   const KSM_VOICE_URL='';
 
   let g,keys=new Set(),holdL=false,holdR=false,holdU=false,holdD=false,autoFire=true;
-  let audioCtx=null,bgmStarted=false,bgmTimer=null,bgmStep=0;
+  let audioCtx=null,bgmStarted=false,bgmTimer=null,bgmStep=0,bgmAudio=null;
+  // 放你有权使用的《春日影》音频地址（本地或URL）
+  const BGM_URL='';
 
   const mk=(cls,html='')=>{const d=document.createElement('div');d.className='obj '+cls;d.innerHTML=html;game.appendChild(d);return d};
   const place=(el,x,y)=>{el.style.left=(x*sx())+'px';el.style.top=(y*sy())+'px';};
@@ -165,6 +167,19 @@
   function startBgm(){
     if(bgmStarted) return;
     bgmStarted=true;
+
+    // 优先播放你提供的外部/本地音乐
+    if(BGM_URL){
+      try{
+        bgmAudio=new Audio(BGM_URL);
+        bgmAudio.loop=true;
+        bgmAudio.volume=0.45;
+        bgmAudio.play().catch(()=>{});
+        return;
+      }catch(e){}
+    }
+
+    // 回退：内置像素风电子乐
     ensureAudio();
     const melody=[523.25,659.25,783.99,659.25,587.33,659.25,493.88,392.00];
     const bass=[130.81,130.81,146.83,130.81,98.00,98.00,110.00,98.00];
@@ -173,7 +188,7 @@
       const i=bgmStep%melody.length;
       beep(melody[i],0.11,'square',0.022,0);
       beep(bass[i],0.16,'triangle',0.015,0.01);
-      if(i%2===0) beep(1046.5,0.03,'square',0.006,0.02); // 轻微像素打击感
+      if(i%2===0) beep(1046.5,0.03,'square',0.006,0.02);
       bgmStep++;
     },180);
   }
