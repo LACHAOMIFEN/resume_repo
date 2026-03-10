@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>BanG Dream! Arcade Shooter</title>
+  <link rel="stylesheet" href="./css/game.css"/>
+</head>
+<body>
+  <main class="wrap">
+    <header class="bar">
+      <div class="stats">
+        <span>分数 <b id="score">0</b></span>
+        <span>生命 <b id="hp">5</b></span>
+        <span>叠加 <b id="stack">0/5</b></span>
+        <span>剩余 <b id="buff">0.0s</b></span>
+        <span>友希那技 <b id="yukina">0%</b></span>
+      </div>
+      <button id="restart" class="btn danger">重开</button>
+    </header>
+
+    <section id="game"></section>
+
+    <footer class="controls">
+      <button class="btn" id="left">←</button>
+      <button class="btn" id="right">→</button>
+      <button class="btn" id="up">↑</button>
+      <button class="btn" id="down">↓</button>
+      <button class="btn" id="fire">开火</button>
+      <button class="btn" id="yukinaBtn">友希那技(K)</button>
+    </footer>
+  </main>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/audio.js"></script>
+  <script src="./js/game.js"></script>
+</body>
+</html>
