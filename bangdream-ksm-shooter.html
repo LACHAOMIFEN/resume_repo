@@ -32,6 +32,7 @@
       <span>生命 <b id="hp">5</b></span>
       <span>X <b id="px">0</b></span>
       <span>模式 <b id="mode">普通</b></span>
+      <span>道具剩余 <b id="buff">0.0s</b></span>
     </div>
     <button id="restart" class="btn">重开</button>
   </div>
@@ -39,6 +40,8 @@
   <div class="controls">
     <button class="btn" id="left">← 左移</button>
     <button class="btn" id="right">右移 →</button>
+    <button class="btn" id="up">↑ 上移</button>
+    <button class="btn" id="down">↓ 下移</button>
     <button class="btn" id="fire">开火</button>
   </div>
 </div>
@@ -49,12 +52,13 @@
   const hpEl=document.getElementById('hp');
   const pxEl=document.getElementById('px');
   const modeEl=document.getElementById('mode');
+  const buffEl=document.getElementById('buff');
   const W=960,H=540;
   const sx=()=>game.clientWidth/W, sy=()=>game.clientHeight/H;
   const ksm='https://bestdori.com/res/icon/chara_icon_1.png';
   const pool=Array.from({length:39},(_,i)=>`https://bestdori.com/res/icon/chara_icon_${i+2}.png`);
 
-  let g,keys=new Set(),holdL=false,holdR=false,autoFire=true;
+  let g,keys=new Set(),holdL=false,holdR=false,holdU=false,holdD=false,autoFire=true;
 
   const mk=(cls,html='')=>{const d=document.createElement('div');d.className='obj '+cls;d.innerHTML=html;game.appendChild(d);return d};
   const place=(el,x,y)=>{el.style.left=(x*sx())+'px';el.style.top=(y*sy())+'px';};
@@ -62,17 +66,31 @@
   function init(){
     game.innerHTML='';
     const pEl=mk('player',`<img src="${ksm}">`);
-    g={score:0,hp:5,mode:'普通',player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,over:false};
+    g={score:0,hp:5,mode:'普通',buffUntil:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,over:false};
     hud();
   }
 
-  function hud(){scoreEl.textContent=g.score;hpEl.textContent=g.hp;pxEl.textContent=Math.round(g.player.x);modeEl.textContent=g.mode;}
+  function hud(){scoreEl.textContent=g.score;hpEl.textContent=g.hp;pxEl.textContent=Math.round(g.player.x);modeEl.textContent=g.mode;const left=Math.max(0,g.buffUntil-g.t);buffEl.textContent=left.toFixed(1)+'s';}
 
   function addEnemy(){
     const el=mk('enemy',`<img src="${pool[(Math.random()*pool.length)|0]}">`);
     g.en.push({x:40+Math.random()*(W-80),y:-30,vx:(Math.random()*100-50),vy:80+Math.random()*60,hp:2,el,fire:0.8+Math.random()*1.2});
   }
-  function addBullet(){const el=mk('bullet');g.bul.push({x:g.player.x,y:g.player.y-28,vy:-500,el});}
+  function addBullet(){
+    const powered = g.t < g.buffUntil;
+    if(powered){
+      for(const dx of [-16,0,16]){
+        const el=mk('bullet');
+        el.style.background = dx===0 ? '#7dffcf' : '#ffb7ff';
+        el.style.width = dx===0 ? '12px' : '8px';
+        el.style.height = dx===0 ? '18px' : '14px';
+        g.bul.push({x:g.player.x+dx,y:g.player.y-28,vx:dx*3,vy:-560,el,powered:true});
+      }
+    }else{
+      const el=mk('bullet');
+      g.bul.push({x:g.player.x,y:g.player.y-28,vx:0,vy:-500,el,powered:false});
+    }
+  }
   function addEB(x,y,vx,vy){const el=mk('eb');g.eb.push({x,y,vx,vy,el});}
   function addDrop(x,y){const el=mk('drop','🎸');g.drop.push({x,y,vy:90,el});}
 
@@ -82,13 +100,17 @@
     g.t+=dt;
     if(holdL||keys.has('ArrowLeft')||keys.has('a')) g.player.x-=320*dt;
     if(holdR||keys.has('ArrowRight')||keys.has('d')) g.player.x+=320*dt;
+    if(holdU||keys.has('ArrowUp')||keys.has('w')) g.player.y-=280*dt;
+    if(holdD||keys.has('ArrowDown')||keys.has('s')) g.player.y+=280*dt;
     g.player.x=Math.max(24,Math.min(W-24,g.player.x));
+    g.player.y=Math.max(40,Math.min(H-24,g.player.y));
 
+    if(g.t>=g.buffUntil && g.mode!=='普通') g.mode='普通';
     g.spawn-=dt; if(g.spawn<=0){addEnemy(); g.spawn=0.55;}
-    g.shoot-=dt; if((autoFire||keys.has(' '))&&g.shoot<=0){addBullet(); g.shoot=0.16;}
+    g.shoot-=dt; if((autoFire||keys.has(' '))&&g.shoot<=0){addBullet(); g.shoot=(g.t<g.buffUntil?0.11:0.16);}
 
     for(const e of g.en){e.x+=e.vx*dt;e.y+=e.vy*dt;if(e.x<20||e.x>W-20)e.vx*=-1;e.fire-=dt;if(e.fire<=0){e.fire=1.2;const dx=g.player.x-e.x,dy=g.player.y-e.y,l=Math.hypot(dx,dy)||1;addEB(e.x,e.y,dx/l*180,dy/l*180)}}
-    for(const b of g.bul)b.y+=b.vy*dt;
+    for(const b of g.bul){b.x+=(b.vx||0)*dt;b.y+=b.vy*dt;}
     for(const b of g.eb){b.x+=b.vx*dt;b.y+=b.vy*dt;}
     for(const d of g.drop)d.y+=d.vy*dt;
 
@@ -98,7 +120,7 @@
       }
     }
     for(const b of g.eb) if(hit(b,g.player,8,22)){b.dead=true;g.hp--; if(g.hp<=0)g.over=true;}
-    for(const d of g.drop) if(hit(d,g.player,16,22)){d.dead=true;g.mode='奇形怪状';}
+    for(const d of g.drop) if(hit(d,g.player,16,22)){d.dead=true;g.mode='奇形怪状';g.buffUntil=Math.max(g.buffUntil,g.t)+8;}
 
     g.en=g.en.filter(e=>!e.dead&&e.y<H+40);
     g.bul=g.bul.filter(b=>!b.dead&&b.y>-30);
@@ -129,11 +151,17 @@
   document.getElementById('right').onpointerdown=()=>holdR=true;
   document.getElementById('right').onpointerup=()=>holdR=false;
   document.getElementById('right').onclick=()=>{g.player.x+=80;hud();};
+  document.getElementById('up').onpointerdown=()=>holdU=true;
+  document.getElementById('up').onpointerup=()=>holdU=false;
+  document.getElementById('up').onclick=()=>{g.player.y-=60;hud();};
+  document.getElementById('down').onpointerdown=()=>holdD=true;
+  document.getElementById('down').onpointerup=()=>holdD=false;
+  document.getElementById('down').onclick=()=>{g.player.y+=60;hud();};
   document.getElementById('fire').onclick=()=>addBullet();
   document.getElementById('restart').onclick=init;
   window.addEventListener('keydown',e=>keys.add(e.key));
   window.addEventListener('keyup',e=>keys.delete(e.key));
-  window.addEventListener('pointerup',()=>{holdL=false;holdR=false;});
+  window.addEventListener('pointerup',()=>{holdL=false;holdR=false;holdU=false;holdD=false;});
 
   init();
   requestAnimationFrame(loop);
