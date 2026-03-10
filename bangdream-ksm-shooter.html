@@ -35,7 +35,9 @@
     .eb{width:10px;height:10px;background:#ff7070;border-radius:999px}
     .drop{font-size:20px}
     .skillfx{font-size:26px;color:#ffd6f5;text-shadow:0 0 10px #ff66cc;animation:burst .7s ease-out forwards}
+    .yukina-flash{width:280px;height:280px;border-radius:16px;object-fit:cover;border:2px solid #ffffffaa;box-shadow:0 0 28px #ff7ad8;animation:yflash .55s ease-out forwards}
     @keyframes burst{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-180%) scale(1.35)}}
+    @keyframes yflash{0%{opacity:0;transform:translate(-50%,-50%) scale(.86)}22%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}
     .controls{display:flex;gap:8px;margin-top:8px}
   </style>
 </head>
@@ -76,6 +78,7 @@
   const sx=()=>game.clientWidth/W, sy=()=>game.clientHeight/H;
   const ksm='https://bestdori.com/res/icon/chara_icon_1.png';
   const pool=Array.from({length:39},(_,i)=>`https://bestdori.com/res/icon/chara_icon_${i+2}.png`);
+  const YUKINA_FLASH_IMG='https://static.wikia.nocookie.net/bandori/images/5/5e/Minato_Yukina_-_Summer_Uniform_Live2D.png/revision/latest?cb=20230823090436';
   // 你可以放一个本地/网络语音链接到这里（例如 ./assets/ksm-voice.mp3）
   const KSM_VOICE_URL='';
 
@@ -199,9 +202,17 @@
       place(fx,x,y);
       setTimeout(()=>fx.remove(),700);
     }
+    const img=document.createElement('img');
+    img.className='obj yukina-flash';
+    img.src=YUKINA_FLASH_IMG;
+    img.alt='Yukina';
+    game.appendChild(img);
+    place(img,W/2,H/2);
+    setTimeout(()=>img.remove(),620);
+
     const flash=mk('skillfx','Roselia · Yukina');
     flash.style.fontSize='30px'; flash.style.color='#ffc3f0';
-    place(flash,W/2,H/2);
+    place(flash,W/2,H/2+170);
     setTimeout(()=>flash.remove(),800);
     playYukinaSfx();
     playVoice();
