@@ -25,11 +25,14 @@
         <span>模式 <b id="mode">普通</b></span>
         <span>必杀 <b id="ult">0%</b></span>
         <span>帧 <b id="fpsTick">0</b></span>
+        <span>X <b id="px">0</b></span>
       </div>
       <button id="restartBtn">重开</button>
     </div>
     <canvas id="game" width="960" height="540"></canvas>
     <div class="controls">
+      <div class="btn" id="leftBtn">← 左移</div>
+      <div class="btn" id="rightBtn">右移 →</div>
       <div class="btn" id="autoBtn">自动开火: 开</div>
       <div class="btn" id="ultBtn">释放必杀</div>
     </div>
@@ -44,9 +47,12 @@
   const modeEl=document.getElementById('mode');
   const ultEl=document.getElementById('ult');
   const restartBtn=document.getElementById('restartBtn');
+  const leftBtn=document.getElementById('leftBtn');
+  const rightBtn=document.getElementById('rightBtn');
   const autoBtn=document.getElementById('autoBtn');
   const ultBtn=document.getElementById('ultBtn');
   const fpsTickEl=document.getElementById('fpsTick');
+  const pxEl=document.getElementById('px');
 
   const ksm='https://bestdori.com/res/icon/chara_icon_1.png';
   const enemies=Array.from({length:39},(_,i)=>`https://bestdori.com/res/icon/chara_icon_${i+2}.png`);
@@ -55,7 +61,7 @@
   const rand=(a,b)=>Math.random()*(b-a)+a;
   const pick=(arr)=>arr[(Math.random()*arr.length)|0];
 
-  let g,keys=new Set(),drag=false,dragX=W/2,autoFire=true,tick=0,demoX=0,demoDir=1;
+  let g,keys=new Set(),drag=false,dragX=W/2,autoFire=true,tick=0,demoX=0,demoDir=1,leftHold=false,rightHold=false;
 
   function init(){
     g={score:0,hp:5,ult:0,t:0,over:false,spawn:0,shootCd:0,nextBoss:180,
@@ -74,6 +80,7 @@
     modeEl.textContent={normal:'普通',guitar:'吉他',bread:'面包',chaos:'混沌'}[g.mode.type];
     autoBtn.textContent='自动开火: '+(autoFire?'开':'关');
     fpsTickEl.textContent=tick;
+    pxEl.textContent=Math.round(g.player.x);
   }
 
   const hit=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y,r=(a.r||0)+(b.r||0);return dx*dx+dy*dy<=r*r};
@@ -127,8 +134,8 @@
     if(g.mode.type!=='normal'&&now>g.mode.until){g.mode.type='normal';updateHUD();}
 
     if(drag) g.player.x += (dragX-g.player.x)*Math.min(1,dt*14);
-    if(keys.has('ArrowLeft')||keys.has('a')||keys.has('A')) g.player.x-=g.player.speed*dt;
-    if(keys.has('ArrowRight')||keys.has('d')||keys.has('D')) g.player.x+=g.player.speed*dt;
+    if(keys.has('ArrowLeft')||keys.has('a')||keys.has('A')||leftHold) g.player.x-=g.player.speed*dt;
+    if(keys.has('ArrowRight')||keys.has('d')||keys.has('D')||rightHold) g.player.x+=g.player.speed*dt;
     g.player.x=Math.max(g.player.r,Math.min(W-g.player.r,g.player.x));
 
     if(autoFire||keys.has(' ')||keys.has('Space')) shoot();
@@ -218,6 +225,19 @@
   restartBtn.onclick=init;
   autoBtn.onclick=()=>{autoFire=!autoFire;updateHUD();};
   ultBtn.onclick=castUlt;
+
+  const holdOn=(el,dir)=>{
+    const down=(e)=>{e.preventDefault(); if(dir==='L') leftHold=true; else rightHold=true;};
+    const up=(e)=>{e.preventDefault(); if(dir==='L') leftHold=false; else rightHold=false;};
+    el.addEventListener('pointerdown',down);
+    el.addEventListener('pointerup',up);
+    el.addEventListener('pointerleave',up);
+    el.addEventListener('pointercancel',up);
+    el.addEventListener('touchstart',down,{passive:false});
+    el.addEventListener('touchend',up,{passive:false});
+  };
+  holdOn(leftBtn,'L');
+  holdOn(rightBtn,'R');
 
   init();
   // 双通道驱动：rAF + setInterval，避免某些内嵌浏览器里动画被冻结
