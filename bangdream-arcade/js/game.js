@@ -6,7 +6,10 @@
     hp:document.getElementById('hp'),
     stack:document.getElementById('stack'),
     buff:document.getElementById('buff'),
-    yukina:document.getElementById('yukina')
+    yukina:document.getElementById('yukina'),
+    diffText:document.getElementById('difficultyText'),
+    best:document.getElementById('best'),
+    menu:document.getElementById('menu')
   };
   const W=960,H=540;
   const sx=()=>game.clientWidth/W, sy=()=>game.clientHeight/H;
@@ -16,12 +19,24 @@
   const hit=(a,b,ra,rb)=>{const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy<=(ra+rb)*(ra+rb)};
   const keys=new Set();
   let hold={l:false,r:false,u:false,d:false};
+  const DIFF={
+    normal:{name:'普通',enemySpawn:0.55,eliteCd:14,enemyBullet:180,eliteBullet:250,playerHp:5},
+    hard:{name:'困难',enemySpawn:0.42,eliteCd:11,enemyBullet:220,eliteBullet:290,playerHp:4},
+    hell:{name:'地狱',enemySpawn:0.32,eliteCd:8,enemyBullet:260,eliteBullet:340,playerHp:3}
+  };
+  const BEST_KEY='bd_arcade_best';
+  let selectedDiff='normal';
   let g;
+  let playing=false;
 
   function init(){
     game.innerHTML='';
+    if(C.bgUrl){
+      game.style.background=`linear-gradient(rgba(3,5,12,.86), rgba(3,5,12,.92)),url('${C.bgUrl}') center/cover no-repeat,#090d19`;
+    }
     const p=mk('player',`<img src="${C.playerIcon}">`);
-    g={t:0,score:0,hp:5,yukina:0,player:{x:W/2,y:H-70,el:p},en:[],bul:[],eb:[],drop:[],spawn:0,elite:6,shoot:0,buffs:[],shield:0,over:false};
+    const d=DIFF[selectedDiff];
+    g={t:0,score:0,hp:d.playerHp,yukina:0,player:{x:W/2,y:H-70,el:p},en:[],bul:[],eb:[],drop:[],spawn:0,elite:6,shoot:0,buffs:[],shield:0,over:false};
     drawUI();
   }
 
@@ -68,15 +83,16 @@
 
     const key=count('keyboard'), bas=count('bass');
     const enemySlow=Math.max(.45,1-bas*.12);
+    const d=DIFF[selectedDiff];
 
-    g.spawn-=dt; if(g.spawn<=0){ addEnemy(); g.spawn=.55; }
-    g.elite-=dt; if(g.elite<=0 && !g.en.some(e=>e.elite&&!e.dead)){ addElite(); g.elite=14; }
+    g.spawn-=dt; if(g.spawn<=0){ addEnemy(); g.spawn=d.enemySpawn; }
+    g.elite-=dt; if(g.elite<=0 && !g.en.some(e=>e.elite&&!e.dead)){ addElite(); g.elite=d.eliteCd; }
     g.shoot-=dt; if(g.shoot<=0){ shoot(); g.shoot=Math.max(.08,.16-key*.015); }
 
     for(const e of g.en){
       if(e.elite){ e.x+=e.vx*dt*enemySlow; e.y=66+Math.sin(g.t*1.4)*8; if(e.x<70||e.x>W-70)e.vx*=-1; }
       else{ e.x+=e.vx*dt*enemySlow; e.y+=e.vy*dt*enemySlow; if(e.x<20||e.x>W-20)e.vx*=-1; }
-      e.fire-=dt; if(e.fire<=0){ e.fire=e.elite?.7:1.2; const dx=g.player.x-e.x,dy=g.player.y-e.y,l=Math.hypot(dx,dy)||1; const sp=e.elite?250:180; addEB(e.x,e.y,dx/l*sp,dy/l*sp); if(e.elite){addEB(e.x-24,e.y+8,dx/l*sp*.9-40,dy/l*sp);addEB(e.x+24,e.y+8,dx/l*sp*.9+40,dy/l*sp);} }
+      e.fire-=dt; if(e.fire<=0){ e.fire=e.elite?.7:1.2; const dx=g.player.x-e.x,dy=g.player.y-e.y,l=Math.hypot(dx,dy)||1; const sp=e.elite?d.eliteBullet:d.enemyBullet; addEB(e.x,e.y,dx/l*sp,dy/l*sp); if(e.elite){addEB(e.x-24,e.y+8,dx/l*sp*.9-40,dy/l*sp);addEB(e.x+24,e.y+8,dx/l*sp*.9+40,dy/l*sp);} }
     }
 
     for(const b of g.bul){ if(b.homing&&g.en.length){let t=null,m=1e9;for(const e of g.en){const d=(e.x-b.x)**2+(e.y-b.y)**2;if(d<m){m=d;t=e;}} if(t)b.vx+=Math.sign(t.x-b.x)*b.homingPower*dt;} b.x+=b.vx*dt; b.y+=b.vy*dt; }
@@ -90,7 +106,7 @@
       }
     }
 
-    for(const b of g.eb){ if(hit(b,g.player,6,14)){ b.dead=true; if(g.shield>0)g.shield--; else g.hp--; } }
+    for(const b of g.eb){ if(hit(b,g.player,6,14)){ b.dead=true; if(g.shield>0)g.shield--; else g.hp--; if(g.hp<=0){g.over=true; onGameOver();} } }
     for(const d of g.drop){ if(hit(d,g.player,16,14)){ d.dead=true; addBuff(d.kind); if(d.kind==='drum')g.shield=Math.min(5,g.shield+3); if(d.kind==='violin')g.yukina=Math.min(100,g.yukina+22); BDAudio.playItem(C.itemSfx[d.kind]); } }
 
     g.en=g.en.filter(e=>!e.dead&&e.y<H+40); g.bul=g.bul.filter(b=>!b.dead&&b.y>-30); g.eb=g.eb.filter(b=>!b.dead&&b.y<H+30&&b.x>-30&&b.x<W+30); g.drop=g.drop.filter(d=>!d.dead&&d.y<H+30);
@@ -105,25 +121,50 @@
     drawUI();
   }
 
+  function getBest(){ return Number(localStorage.getItem(BEST_KEY)||0); }
+  function setBest(v){ localStorage.setItem(BEST_KEY,String(v)); }
+
   function drawUI(){
     const ab=active();
     ui.score.textContent=g.score; ui.hp.textContent=g.hp; ui.stack.textContent=`${ab.length}/5`;
     ui.buff.textContent=(ab.length?Math.max(...ab.map(b=>b.until-g.t)):0).toFixed(1)+'s';
     ui.yukina.textContent=Math.floor(g.yukina)+'%';
+    ui.diffText.textContent=DIFF[selectedDiff].name;
+    ui.best.textContent=getBest();
+  }
+
+  function onGameOver(){
+    playing=false;
+    if(g.score>getBest()) setBest(g.score);
+    drawUI();
+    setTimeout(()=>{ ui.menu.classList.remove('hidden'); }, 300);
   }
 
   let last=performance.now();
-  function loop(n){ const dt=Math.min(.033,(n-last)/1000); last=n; if(!g.over) step(dt); requestAnimationFrame(loop); }
+  function loop(n){ const dt=Math.min(.033,(n-last)/1000); last=n; if(playing && g && !g.over) step(dt); requestAnimationFrame(loop); }
 
-  const bindHold=(id,key)=>{ const el=document.getElementById(id); el.onpointerdown=()=>{BDAudio.startBgm(C.bgmUrl); hold[key]=true;}; el.onpointerup=()=>hold[key]=false; el.onclick=()=>{BDAudio.startBgm(C.bgmUrl); if(key==='l')g.player.x-=80; if(key==='r')g.player.x+=80; if(key==='u')g.player.y-=60; if(key==='d')g.player.y+=60; }; };
+  const bindHold=(id,key)=>{ const el=document.getElementById(id); el.onpointerdown=()=>{BDAudio.startBgm(C.bgmUrl); hold[key]=true;}; el.onpointerup=()=>hold[key]=false; el.onclick=()=>{BDAudio.startBgm(C.bgmUrl); if(!g)return; if(key==='l')g.player.x-=80; if(key==='r')g.player.x+=80; if(key==='u')g.player.y-=60; if(key==='d')g.player.y+=60; }; };
   bindHold('left','l'); bindHold('right','r'); bindHold('up','u'); bindHold('down','d');
   document.getElementById('fire').onclick=()=>BDAudio.startBgm(C.bgmUrl);
-  document.getElementById('yukinaBtn').onclick=()=>castYukina();
-  document.getElementById('restart').onclick=init;
-  window.addEventListener('keydown',e=>{BDAudio.startBgm(C.bgmUrl); keys.add(e.key); if(e.key==='k'||e.key==='K')castYukina();});
+  document.getElementById('yukinaBtn').onclick=()=>{ if(g) castYukina(); };
+  document.getElementById('restart').onclick=()=>{ init(); playing=true; ui.menu.classList.add('hidden'); };
+
+  document.querySelectorAll('[data-diff]').forEach(btn=>{
+    btn.onclick=()=>{
+      selectedDiff=btn.dataset.diff;
+      document.querySelectorAll('[data-diff]').forEach(x=>x.classList.remove('active'));
+      btn.classList.add('active');
+      if(g) drawUI();
+    };
+  });
+  document.querySelector('[data-diff="normal"]').classList.add('active');
+  document.getElementById('startBtn').onclick=()=>{ init(); playing=true; ui.menu.classList.add('hidden'); BDAudio.startBgm(C.bgmUrl); };
+
+  window.addEventListener('keydown',e=>{BDAudio.startBgm(C.bgmUrl); keys.add(e.key); if(e.key==='k'||e.key==='K'){ if(g) castYukina(); }});
   window.addEventListener('keyup',e=>keys.delete(e.key));
   window.addEventListener('pointerup',()=>hold={l:false,r:false,u:false,d:false});
 
   init();
+  drawUI();
   requestAnimationFrame(loop);
 })();

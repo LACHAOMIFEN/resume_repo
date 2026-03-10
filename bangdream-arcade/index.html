@@ -15,11 +15,26 @@
         <span>叠加 <b id="stack">0/5</b></span>
         <span>剩余 <b id="buff">0.0s</b></span>
         <span>友希那技 <b id="yukina">0%</b></span>
+        <span>难度 <b id="difficultyText">普通</b></span>
+        <span>最高分 <b id="best">0</b></span>
       </div>
       <button id="restart" class="btn danger">重开</button>
     </header>
 
     <section id="game"></section>
+
+    <section id="menu" class="menu">
+      <div class="menu-card">
+        <h2>BanG Dream! Arcade</h2>
+        <p>选择难度后开始游戏</p>
+        <div class="menu-row">
+          <button class="btn" data-diff="normal">普通</button>
+          <button class="btn" data-diff="hard">困难</button>
+          <button class="btn" data-diff="hell">地狱</button>
+        </div>
+        <button id="startBtn" class="btn danger">开始游戏</button>
+      </div>
+    </section>
 
     <footer class="controls">
       <button class="btn" id="left">←</button>
