@@ -192,12 +192,23 @@
 
   function render(){
     ctx.clearRect(0,0,W,H);
+    // 调试底板：确保你一定能看到玩家位置
+    ctx.fillStyle='rgba(255,255,255,0.06)';
+    ctx.fillRect(0,H-120,W,120);
     for(let i=0;i<70;i++){const sx=(i*137+g.t*70*(i%3+1))%W,sy=(i*79+g.t*36*(i%5+1))%H;ctx.fillStyle=`rgba(255,255,255,${0.1+(i%5)*0.05})`;ctx.fillRect(sx,sy,2,2);} 
     ctx.fillStyle='#7dffcf';
     ctx.fillRect(demoX-8, 18, 16, 8);
 
-    drawShip(g.player.x,g.player.y,1.2,'#ff74c6');
-    drawAvatar(g.player.img,g.player.x,g.player.y-3,11);
+    // 玩家主体（大尺寸高对比，避免“看不出在动”）
+    drawShip(g.player.x,g.player.y,1.6,'#ff4fb8');
+    drawAvatar(g.player.img,g.player.x,g.player.y-6,14);
+    ctx.strokeStyle='#ffffff';
+    ctx.lineWidth=2;
+    ctx.strokeRect(g.player.x-24,g.player.y-32,48,56);
+    ctx.fillStyle='#ffffff';
+    ctx.font='12px sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('KSM', g.player.x, g.player.y+36);
 
     for(const f of g.foes){drawShip(f.x,f.y,.95,'#6f88ff');drawAvatar(f.img,f.x,f.y-2,9);}
     if(g.boss){drawShip(g.boss.x,g.boss.y,2.1,'#b56cff');drawAvatar(g.boss.img,g.boss.x,g.boss.y-4,20);const w=320,h=12,bx=(W-w)/2,by=10;ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect(bx,by,w,h);ctx.fillStyle='#ff7fbf';ctx.fillRect(bx,by,w*(g.boss.hp/g.boss.max),h);}
@@ -229,6 +240,9 @@
   const holdOn=(el,dir)=>{
     const down=(e)=>{e.preventDefault(); if(dir==='L') leftHold=true; else rightHold=true;};
     const up=(e)=>{e.preventDefault(); if(dir==='L') leftHold=false; else rightHold=false;};
+    // 点按立即位移（极端兼容）
+    const tap=(e)=>{e.preventDefault(); g.player.x += (dir==='L'?-80:80); g.player.x=Math.max(g.player.r,Math.min(W-g.player.r,g.player.x)); updateHUD(); render();};
+    el.addEventListener('click',tap);
     el.addEventListener('pointerdown',down);
     el.addEventListener('pointerup',up);
     el.addEventListener('pointerleave',up);
