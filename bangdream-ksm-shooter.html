@@ -14,14 +14,17 @@
     #restart{background:#ff7ac6;color:#260018}
     #game{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #ffffff24;
       background:
-      linear-gradient(transparent 96%, rgba(255,255,255,.06) 96%),
-      linear-gradient(90deg, transparent 96%, rgba(255,255,255,.05) 96%),
+      linear-gradient(rgba(4,6,14,.72), rgba(4,6,14,.78)),
+      url('https://static.wikia.nocookie.net/bandori/images/1/14/MyGO%21%21%21%21%21.jpeg/revision/latest?cb=20230527094206') center/cover no-repeat,
       radial-gradient(circle at 20% 10%, #233a7a 0%, #121a3e 40%, #090d19 100%);
-      background-size: 16px 16px, 16px 16px, 100% 100%;
     }
     #game::before{content:'';position:absolute;inset:0;pointer-events:none;
-      background: repeating-linear-gradient(180deg, rgba(255,255,255,.03) 0 2px, transparent 2px 6px);
-      mix-blend-mode: screen;opacity:.45;
+      background:
+        linear-gradient(transparent 96%, rgba(255,255,255,.05) 96%),
+        linear-gradient(90deg, transparent 96%, rgba(255,255,255,.04) 96%),
+        repeating-linear-gradient(180deg, rgba(255,255,255,.025) 0 2px, transparent 2px 6px);
+      background-size:16px 16px,16px 16px,auto;
+      mix-blend-mode: screen;opacity:.32;
     }
     .obj{position:absolute;transform:translate(-50%,-50%);user-select:none;pointer-events:none}
     .player{width:54px;height:54px;border:2px solid #fff;border-radius:12px;background:#ff4fb8cc;display:grid;place-items:center}
@@ -73,6 +76,8 @@
   const sx=()=>game.clientWidth/W, sy=()=>game.clientHeight/H;
   const ksm='https://bestdori.com/res/icon/chara_icon_1.png';
   const pool=Array.from({length:39},(_,i)=>`https://bestdori.com/res/icon/chara_icon_${i+2}.png`);
+  // 你可以放一个本地/网络语音链接到这里（例如 ./assets/ksm-voice.mp3）
+  const KSM_VOICE_URL='';
 
   let g,keys=new Set(),holdL=false,holdR=false,holdU=false,holdD=false,autoFire=true;
   let audioCtx=null,bgmStarted=false,bgmTimer=null,bgmStep=0;
@@ -170,6 +175,11 @@
     },180);
   }
 
+  function playVoice(){
+    if(!KSM_VOICE_URL) return;
+    try{ const a=new Audio(KSM_VOICE_URL); a.volume=0.75; a.play().catch(()=>{}); }catch(e){}
+  }
+
   function playYukinaSfx(){
     try{ ensureAudio(); const t=audioCtx.currentTime; const notes=[659,784,1047];
       notes.forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sawtooth';o.frequency.value=f;o.connect(g);g.connect(audioCtx.destination);g.gain.setValueAtTime(0.0001,t+i*0.08);g.gain.exponentialRampToValueAtTime(0.14,t+i*0.08+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+i*0.08+0.26);o.start(t+i*0.08);o.stop(t+i*0.08+0.28);});
@@ -194,6 +204,7 @@
     place(flash,W/2,H/2);
     setTimeout(()=>flash.remove(),800);
     playYukinaSfx();
+    playVoice();
   }
 
   function step(dt){
