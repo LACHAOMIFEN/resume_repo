@@ -41,7 +41,13 @@
 <script>
 const c = document.getElementById('game'), x = c.getContext('2d');
 const W=c.width,H=c.height;
-const scoreEl=score, hpEl=hp, modeEl=mode, ultEl=ult;
+const scoreEl=document.getElementById('score');
+const hpEl=document.getElementById('hp');
+const modeEl=document.getElementById('mode');
+const ultEl=document.getElementById('ult');
+const btnUlt=document.getElementById('btnUlt');
+const btnAuto=document.getElementById('btnAuto');
+const restartBtn=document.getElementById('restart');
 const keys=new Set();
 const imgCache=new Map();
 const ksm='https://bestdori.com/res/icon/chara_icon_1.png';
@@ -115,7 +121,7 @@ function draw(){
 }
 
 let last=performance.now();
-(function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;if(!g.over)upd(dt);draw();requestAnimationFrame(loop)})(last);
+function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;if(g && !g.over)upd(dt);if(g)draw();requestAnimationFrame(loop)}
 
 function canvasToGame(clientX){const r=c.getBoundingClientRect();return (clientX-r.left)/r.width*W;}
 c.addEventListener('pointerdown',e=>{dragging=true;dragX=canvasToGame(e.clientX);c.setPointerCapture(e.pointerId)});
@@ -128,9 +134,10 @@ window.addEventListener('keyup',e=>keys.delete(e.key==='Spacebar'?' ':e.key));
 
 btnUlt.onclick=ult;
 btnAuto.onclick=()=>{autoFire=!autoFire;btnAuto.textContent='自动开火: '+(autoFire?'开':'关')};
-restart.onclick=init;
+restartBtn.onclick=init;
 
 init();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
