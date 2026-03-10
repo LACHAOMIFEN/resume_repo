@@ -30,7 +30,9 @@
     .player{width:54px;height:54px;border:2px solid #fff;border-radius:12px;background:#ff4fb8cc;display:grid;place-items:center}
     .player img{width:34px;height:34px;border-radius:999px;object-fit:cover}
     .enemy{width:40px;height:40px;border-radius:10px;background:#6f88ffcc;border:1px solid #fff8;display:grid;place-items:center}
+    .enemy.elite{width:62px;height:62px;border-radius:14px;background:#8f54ffcc;border:2px solid #ffd2ff;box-shadow:0 0 16px #b67cff}
     .enemy img{width:26px;height:26px;border-radius:999px;object-fit:cover}
+    .enemy.elite img{width:38px;height:38px}
     .bullet{width:8px;height:14px;background:#ffe46f;border-radius:999px}
     .eb{width:10px;height:10px;background:#ff7070;border-radius:999px}
     .drop{font-size:20px}
@@ -79,8 +81,17 @@
   const ksm='https://bestdori.com/res/icon/chara_icon_1.png';
   const pool=Array.from({length:39},(_,i)=>`https://bestdori.com/res/icon/chara_icon_${i+2}.png`);
   const YUKINA_FLASH_IMG='https://static.wikia.nocookie.net/bandori/images/5/5e/Minato_Yukina_-_Summer_Uniform_Live2D.png/revision/latest?cb=20230823090436';
-  // 你可以放一个本地/网络语音链接到这里（例如 ./assets/ksm-voice.mp3）
-  const KSM_VOICE_URL='';
+
+  // ===== 资源接口（你上传后填这里） =====
+  const GAME_BG_URL=''; // 例如: './assets/bg-dark.jpg'
+  const KSM_VOICE_URL=''; // 例如: './assets/ksm-voice.mp3'
+  const ITEM_SFX_URL={
+    guitar:'',   // 例如 './assets/sfx-guitar.mp3'
+    keyboard:'',
+    drum:'',
+    bass:'',
+    violin:''
+  };
 
   let g,keys=new Set(),holdL=false,holdR=false,holdU=false,holdD=false,autoFire=true;
   let audioCtx=null,bgmStarted=false,bgmTimer=null,bgmStep=0,bgmAudio=null;
@@ -89,11 +100,21 @@
 
   const mk=(cls,html='')=>{const d=document.createElement('div');d.className='obj '+cls;d.innerHTML=html;game.appendChild(d);return d};
   const place=(el,x,y)=>{el.style.left=(x*sx())+'px';el.style.top=(y*sy())+'px';};
+  function applyBackground(){
+    if(!GAME_BG_URL) return;
+    game.style.background = `linear-gradient(rgba(4,6,14,.72), rgba(4,6,14,.78)), url('${GAME_BG_URL}') center/cover no-repeat, radial-gradient(circle at 20% 10%, #233a7a 0%, #121a3e 40%, #090d19 100%)`;
+  }
+  function playItemSfx(kind){
+    const u=ITEM_SFX_URL[kind];
+    if(!u) return;
+    try{ const a=new Audio(u); a.volume=0.8; a.play().catch(()=>{});}catch(e){}
+  }
 
   function init(){
     game.innerHTML='';
+    applyBackground();
     const pEl=mk('player',`<img src="${ksm}">`);
-    g={score:0,hp:5,mode:'普通',buffType:null,buffUntil:0,shield:0,yukina:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,over:false};
+    g={score:0,hp:5,mode:'普通',buffType:null,buffUntil:0,shield:0,yukina:0,player:{x:W/2,y:H-70,el:pEl},bul:[],eb:[],en:[],drop:[],t:0,spawn:0,shoot:0,eliteCd:7,over:false};
     hud();
   }
 
@@ -101,7 +122,11 @@
 
   function addEnemy(){
     const el=mk('enemy',`<img src="${pool[(Math.random()*pool.length)|0]}">`);
-    g.en.push({x:40+Math.random()*(W-80),y:-30,vx:(Math.random()*100-50),vy:80+Math.random()*60,hp:2,el,fire:0.8+Math.random()*1.2});
+    g.en.push({x:40+Math.random()*(W-80),y:-30,vx:(Math.random()*100-50),vy:80+Math.random()*60,hp:2,elite:false,el,fire:0.8+Math.random()*1.2});
+  }
+  function addElite(){
+    const el=mk('enemy elite',`<img src="${pool[(Math.random()*pool.length)|0]}">`);
+    g.en.push({x:120+Math.random()*(W-240),y:66,vx:(Math.random()<0.5?-1:1)*85,vy:0,hp:22,elite:true,el,fire:0.45});
   }
   function addBullet(){
     const active = g.t < g.buffUntil ? g.buffType : null;
@@ -245,13 +270,34 @@
     if(g.t>=g.buffUntil && g.mode!=='普通'){ g.mode='普通'; g.buffType=null; }
     const active = g.t < g.buffUntil ? g.buffType : null;
     g.spawn-=dt; if(g.spawn<=0){addEnemy(); g.spawn=0.55;}
+    g.eliteCd-=dt;
+    if(g.eliteCd<=0 && !g.en.some(e=>e.elite && e.hp>0)){ addElite(); g.eliteCd=14; }
+
     g.shoot-=dt; if((autoFire||keys.has(' '))&&g.shoot<=0){
       addBullet();
       g.shoot = active==='keyboard' ? 0.22 : active ? 0.11 : 0.16;
     }
 
     const enemySlow = active==='bass' ? 0.6 : 1;
-    for(const e of g.en){e.x+=e.vx*dt*enemySlow;e.y+=e.vy*dt*enemySlow;if(e.x<20||e.x>W-20)e.vx*=-1;e.fire-=dt;if(e.fire<=0){e.fire=1.2;const dx=g.player.x-e.x,dy=g.player.y-e.y,l=Math.hypot(dx,dy)||1;addEB(e.x,e.y,dx/l*180,dy/l*180)}}
+    for(const e of g.en){
+      if(e.elite){
+        e.x+=e.vx*dt*enemySlow;
+        e.y = 66 + Math.sin(g.t*1.4)*8;
+        if(e.x<70||e.x>W-70)e.vx*=-1;
+      }else{
+        e.x+=e.vx*dt*enemySlow;
+        e.y+=e.vy*dt*enemySlow;
+        if(e.x<20||e.x>W-20)e.vx*=-1;
+      }
+      e.fire-=dt;
+      if(e.fire<=0){
+        e.fire=e.elite?0.7:1.2;
+        const dx=g.player.x-e.x,dy=g.player.y-e.y,l=Math.hypot(dx,dy)||1;
+        const speed=e.elite?250:180;
+        addEB(e.x,e.y,dx/l*speed,dy/l*speed);
+        if(e.elite){ addEB(e.x-24,e.y+8,dx/l*speed*0.9-40,dy/l*speed); addEB(e.x+24,e.y+8,dx/l*speed*0.9+40,dy/l*speed); }
+      }
+    }
     for(const b of g.bul){
       if(b.homing && g.en.length){
         let t=null,md=1e9; for(const e of g.en){const d=(e.x-b.x)**2+(e.y-b.y)**2; if(d<md){md=d;t=e;}}
@@ -267,7 +313,13 @@
         if(e.hp>0 && hit(b,e,7,16)){
           e.hp-=(b.dmg||1);
           if((b.pierce||0)>0){ b.pierce--; } else { b.dead=true; }
-          if(e.hp<=0){e.dead=true;g.score+=10;g.yukina=Math.min(100,g.yukina+8);if(Math.random()<0.25)addDrop(e.x,e.y);} 
+          if(e.hp<=0){
+            e.dead=true;
+            g.score += e.elite ? 80 : 10;
+            g.yukina = Math.min(100, g.yukina + (e.elite?25:8));
+            if(e.elite){ addDrop(e.x-20,e.y); addDrop(e.x+20,e.y+6); }
+            else if(Math.random()<0.25) addDrop(e.x,e.y);
+          } 
         }
       }
     }
@@ -278,6 +330,7 @@
     }
     for(const d of g.drop) if(hit(d,g.player,16,14)){
       d.dead=true;
+      playItemSfx(d.kind);
       g.buffUntil=Math.max(g.buffUntil,g.t)+8;
       g.buffType=d.kind;
       if(d.kind==='guitar'){ g.mode='吉他散射'; }
