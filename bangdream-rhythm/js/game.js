@@ -6,6 +6,7 @@
   const judgeEl=document.getElementById('judge');
   const startBtn=document.getElementById('start');
   const autoBtn=document.getElementById('auto');
+  const songSel=document.getElementById('song');
   const keyEls=[...document.querySelectorAll('.keys div')];
 
   const KEYS=['d','f','j','k'];
@@ -18,6 +19,7 @@
   let score=0,combo=0,maxCombo=0;
   let started=false,last=0,auto=false,songStart=0;
   let bgm=null;
+  const laneEls=[];
 
   for(let i=0;i<4;i++){
     const lane=document.createElement('div');
@@ -25,27 +27,29 @@
     lane.dataset.i=i;
     lane.addEventListener('pointerdown',()=>hitLane(i));
     lanesEl.appendChild(lane);
+    laneEls.push(lane);
   }
 
-  function loadChart(){
-    // 简单4拍风谱面（可继续扩展）
+  function loadChart(kind='default'){
     const arr=[];
-    let t=0.8;
-    const pattern=[0,1,2,3,1,2,0,3,0,2,1,3,1,0,2,3];
-    for(let i=0;i<96;i++){
-      const lane=pattern[i%pattern.length];
-      arr.push({lane,time:t,hit:false,el:null});
-      if(i%8===7){ // 小连打
-        arr.push({lane:(lane+1)%4,time:t+0.15,hit:false,el:null});
-      }
-      t+=0.35;
+    if(kind==='fast'){
+      let t=0.7; const p=[0,1,2,3,2,1,0,3];
+      for(let i=0;i<140;i++){const lane=p[i%p.length];arr.push({lane,time:t,hit:false,el:null}); if(i%6===0)arr.push({lane:(lane+2)%4,time:t+0.1,hit:false,el:null}); t+=0.24;}
+      return arr;
     }
+    if(kind==='swing'){
+      let t=0.8; const p=[0,2,1,3,0,1,2,3];
+      for(let i=0;i<110;i++){const lane=p[i%p.length];arr.push({lane,time:t,hit:false,el:null}); t += (i%2?0.42:0.28);} 
+      return arr;
+    }
+    let t=0.8; const p=[0,1,2,3,1,2,0,3,0,2,1,3,1,0,2,3];
+    for(let i=0;i<96;i++){const lane=p[i%p.length];arr.push({lane,time:t,hit:false,el:null}); if(i%8===7)arr.push({lane:(lane+1)%4,time:t+0.15,hit:false,el:null}); t+=0.35;}
     return arr;
   }
 
   function reset(){
     lanesEl.querySelectorAll('.note').forEach(n=>n.remove());
-    notes=loadChart();
+    notes=loadChart(songSel.value);
     score=0;combo=0;maxCombo=0;
     started=true;
     songStart=performance.now()/1000;
@@ -70,7 +74,7 @@
     const el=document.createElement('div');
     el.className=`note l${note.lane}`;
     el.style.top=SPAWN_Y+'px';
-    lanesEl.appendChild(el);
+    laneEls[note.lane].appendChild(el);
     note.el=el;
   }
 
