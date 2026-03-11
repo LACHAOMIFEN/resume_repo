@@ -9,7 +9,12 @@
     yukina:document.getElementById('yukina'),
     diffText:document.getElementById('difficultyText'),
     best:document.getElementById('best'),
-    menu:document.getElementById('menu')
+    menu:document.getElementById('menu'),
+    pauseMenu:document.getElementById('pauseMenu'),
+    pauseBtn:document.getElementById('pauseBtn'),
+    resumeBtn:document.getElementById('resumeBtn'),
+    restartBtn2:document.getElementById('restartBtn2'),
+    backMenuBtn:document.getElementById('backMenuBtn')
   };
   const W=960,H=540;
   const sx=()=>game.clientWidth/W, sy=()=>game.clientHeight/H;
@@ -28,6 +33,7 @@
   let selectedDiff='normal';
   let g;
   let playing=false;
+  let paused=false;
 
   function init(){
     game.innerHTML='';
@@ -135,19 +141,28 @@
 
   function onGameOver(){
     playing=false;
+    paused=false;
+    ui.pauseMenu.classList.add('hidden');
     if(g.score>getBest()) setBest(g.score);
     drawUI();
     setTimeout(()=>{ ui.menu.classList.remove('hidden'); }, 300);
   }
 
+  function setPaused(v){
+    if(!playing) return;
+    paused=v;
+    if(paused) ui.pauseMenu.classList.remove('hidden');
+    else ui.pauseMenu.classList.add('hidden');
+  }
+
   let last=performance.now();
-  function loop(n){ const dt=Math.min(.033,(n-last)/1000); last=n; if(playing && g && !g.over) step(dt); requestAnimationFrame(loop); }
+  function loop(n){ const dt=Math.min(.033,(n-last)/1000); last=n; if(playing && !paused && g && !g.over) step(dt); requestAnimationFrame(loop); }
 
   const bindHold=(id,key)=>{ const el=document.getElementById(id); el.onpointerdown=()=>{BDAudio.startBgm(C.bgmUrl); hold[key]=true;}; el.onpointerup=()=>hold[key]=false; el.onclick=()=>{BDAudio.startBgm(C.bgmUrl); if(!g)return; if(key==='l')g.player.x-=80; if(key==='r')g.player.x+=80; if(key==='u')g.player.y-=60; if(key==='d')g.player.y+=60; }; };
   bindHold('left','l'); bindHold('right','r'); bindHold('up','u'); bindHold('down','d');
   document.getElementById('fire').onclick=()=>BDAudio.startBgm(C.bgmUrl);
   document.getElementById('yukinaBtn').onclick=()=>{ if(g) castYukina(); };
-  document.getElementById('restart').onclick=()=>{ init(); playing=true; ui.menu.classList.add('hidden'); };
+  document.getElementById('restart').onclick=()=>{ init(); playing=true; paused=false; ui.menu.classList.add('hidden'); ui.pauseMenu.classList.add('hidden'); };
 
   document.querySelectorAll('[data-diff]').forEach(btn=>{
     btn.onclick=()=>{
@@ -158,9 +173,19 @@
     };
   });
   document.querySelector('[data-diff="normal"]').classList.add('active');
-  document.getElementById('startBtn').onclick=()=>{ init(); playing=true; ui.menu.classList.add('hidden'); BDAudio.startBgm(C.bgmUrl); };
+  document.getElementById('startBtn').onclick=()=>{ init(); playing=true; paused=false; ui.menu.classList.add('hidden'); ui.pauseMenu.classList.add('hidden'); BDAudio.startBgm(C.bgmUrl); };
 
-  window.addEventListener('keydown',e=>{BDAudio.startBgm(C.bgmUrl); keys.add(e.key); if(e.key==='k'||e.key==='K'){ if(g) castYukina(); }});
+  ui.pauseBtn.onclick=()=>setPaused(!paused);
+  ui.resumeBtn.onclick=()=>setPaused(false);
+  ui.restartBtn2.onclick=()=>{ init(); playing=true; paused=false; ui.pauseMenu.classList.add('hidden'); ui.menu.classList.add('hidden'); };
+  ui.backMenuBtn.onclick=()=>{ playing=false; paused=false; ui.pauseMenu.classList.add('hidden'); ui.menu.classList.remove('hidden'); };
+
+  window.addEventListener('keydown',e=>{
+    BDAudio.startBgm(C.bgmUrl);
+    keys.add(e.key);
+    if(e.key==='k'||e.key==='K'){ if(g) castYukina(); }
+    if(e.key==='p'||e.key==='P') setPaused(!paused);
+  });
   window.addEventListener('keyup',e=>keys.delete(e.key));
   window.addEventListener('pointerup',()=>hold={l:false,r:false,u:false,d:false});
 
