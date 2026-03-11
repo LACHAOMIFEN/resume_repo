@@ -1,0 +1,21 @@
+body{margin:0;background:#0a1022;color:#eef;font-family:system-ui,"PingFang SC";display:grid;place-items:center;min-height:100vh}
+.wrap{width:min(560px,96vw)}
+.hud{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.hud span{background:#ffffff16;border:1px solid #ffffff28;border-radius:999px;padding:6px 10px;font-size:12px;color:#c7d0ff}
+.game{position:relative;height:min(78vh,720px);border:1px solid #ffffff2a;border-radius:12px;overflow:hidden;
+  background:linear-gradient(rgba(4,8,18,.82),rgba(4,8,18,.9)),url('../source/img_game_6th.jpg') center/cover no-repeat,#0a1022}
+.lanes{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr)}
+.lane{position:relative;border-right:1px solid #ffffff1e}
+.lane:last-child{border-right:none}
+.note{position:absolute;left:50%;width:72%;height:18px;transform:translateX(-50%);border-radius:8px;background:#7ea8ff;box-shadow:0 0 10px #7ea8ff88}
+.note.l0{background:#ff88c7;box-shadow:0 0 10px #ff88c788}
+.note.l1{background:#8de3ff;box-shadow:0 0 10px #8de3ff88}
+.note.l2{background:#a6ff9f;box-shadow:0 0 10px #a6ff9f88}
+.note.l3{background:#ffd27c;box-shadow:0 0 10px #ffd27c88}
+.hitline{position:absolute;left:0;right:0;bottom:90px;height:4px;background:#fff;box-shadow:0 0 10px #fff}
+.keys{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px;background:#0008}
+.keys div{height:66px;border-radius:8px;background:#ffffff18;display:grid;place-items:center;font-weight:700}
+.keys .active{background:#ffffff44}
+.panel{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:10px;padding:8px 12px;background:#ff7ac6;color:#260018;font-weight:700;cursor:pointer}
+.tip{font-size:12px;color:#b7c1f7}

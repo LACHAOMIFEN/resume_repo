@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>BanG Dream! Rhythm</title>
+  <link rel="stylesheet" href="./css/style.css"/>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hud">
+      <span>分数 <b id="score">0</b></span>
+      <span>连击 <b id="combo">0</b></span>
+      <span>最高连击 <b id="maxCombo">0</b></span>
+      <span>判定 <b id="judge">-</b></span>
+    </header>
+
+    <section id="game" class="game">
+      <div class="lanes" id="lanes"></div>
+      <div class="hitline"></div>
+      <div class="keys">
+        <div>D</div><div>F</div><div>J</div><div>K</div>
+      </div>
+    </section>
+
+    <footer class="panel">
+      <button id="start" class="btn">开始/重开</button>
+      <button id="auto" class="btn">自动演奏: 关</button>
+      <span class="tip">按键：D F J K（手机可点轨道）</span>
+    </footer>
+  </main>
+
+  <script src="./js/game.js"></script>
+</body>
+</html>
