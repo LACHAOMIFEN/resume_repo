@@ -4,6 +4,7 @@ import typer
 from repopilot.artifacts import write_artifacts
 from repopilot.github import parse_issue_input
 from repopilot.pr import build_pr_create_command
+from repopilot.summary import write_summary
 from repopilot.workflow import run_pipeline
 
 app = typer.Typer(help="RepoPilot CLI")
@@ -40,6 +41,9 @@ def run(
             title=f"fix: {parsed.title}",
         )
         result["pr_command"] = pr_cmd
+
+    summary_path = write_summary(out_dir=out_dir, result=result)
+    result.setdefault("artifacts", {})["summary"] = summary_path
 
     typer.echo(json.dumps(result, ensure_ascii=False, indent=2))
 

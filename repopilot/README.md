@@ -29,6 +29,7 @@ After each run, RepoPilot writes:
 - `artifacts/branch_name.txt`
 - `artifacts/patch_preview.diff`
 - `artifacts/pr_draft.md`
+- `artifacts/summary.md` (one-file dry-run report)
 
 ## PR Command (safe preview)
 Print a draft PR command without executing it:
