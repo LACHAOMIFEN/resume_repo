@@ -16,6 +16,7 @@ pip install '.[dev]'
 cp .env.example .env
 python -m repopilot.main --issue "Fix failing unit tests in parser" --retries 1
 # artifacts will be generated under ./artifacts
+# gate checks auto-inject PYTHONPATH=src
 ```
 
 ## Input Formats

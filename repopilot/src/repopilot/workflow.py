@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -34,8 +35,13 @@ def _run_check(cmd: list[str], timeout: int = 60) -> CheckExec:
     if shutil.which(cmd[0]) is None:
         return CheckExec(name=name, passed=False, output=f"missing binary: {cmd[0]}")
 
+    env = os.environ.copy()
+    # Ensure local package imports work in gate checks
+    src_path = os.path.abspath("src")
+    env["PYTHONPATH"] = src_path + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
     except subprocess.TimeoutExpired:
         return CheckExec(name=name, passed=False, output="timeout")
 
