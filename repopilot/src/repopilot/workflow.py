@@ -52,8 +52,16 @@ def _run_check(cmd: list[str], timeout: int = 120) -> CheckExec:
     return CheckExec(name=name, passed=(proc.returncode == 0), output=out.strip()[:1200])
 
 
-def tester(proposal: CodeProposal, checks: list[list[str]] | None = None) -> TestResult:
+def tester(
+    proposal: CodeProposal,
+    checks: list[list[str]] | None = None,
+    execute_checks: bool = True,
+) -> TestResult:
     checks = checks or [[sys.executable, "-m", "pytest", "-q", "tests"], ["ruff", "check", "."]]
+    if not execute_checks:
+        names = [" ".join(c) for c in checks]
+        return TestResult(passed=True, checks=names, notes="check execution skipped (test mode)")
+
     results = [_run_check(c) for c in checks]
     passed = all(r.passed for r in results)
     summary = " | ".join([f"{r.name}: {'ok' if r.passed else 'fail'}" for r in results])
@@ -72,14 +80,14 @@ def reviewer(proposal: CodeProposal, test: TestResult) -> ReviewResult:
     return ReviewResult(merge_ready=True, risks=[], comments=["Looks good for PR draft"])
 
 
-def run_pipeline(issue_text: str, retries: int = 1) -> dict:
+def run_pipeline(issue_text: str, retries: int = 1, execute_checks: bool = True) -> dict:
     p = planner(issue_text)
     c = coder(p)
 
     attempts = []
     t = None
     for i in range(max(1, retries + 1)):
-        t = tester(c)
+        t = tester(c, execute_checks=execute_checks)
         attempts.append({"attempt": i + 1, "passed": t.passed, "notes": t.notes})
         if t.passed:
             break
