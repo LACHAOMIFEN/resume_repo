@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 
 from repopilot.agents import CodeProposal, Plan, ReviewResult, TestResult
@@ -50,10 +51,12 @@ def _run_check(cmd: list[str], timeout: int = 60) -> CheckExec:
 
 
 def tester(proposal: CodeProposal, checks: list[list[str]] | None = None) -> TestResult:
-    checks = checks or [["pytest", "-q"], ["ruff", "check", "."]]
+    checks = checks or [[sys.executable, "-m", "pytest", "-q"], ["ruff", "check", "."]]
     results = [_run_check(c) for c in checks]
     passed = all(r.passed for r in results)
-    notes = " | ".join([f"{r.name}: {'ok' if r.passed else 'fail'}" for r in results])
+    summary = " | ".join([f"{r.name}: {'ok' if r.passed else 'fail'}" for r in results])
+    failed_details = [f"{r.name} => {r.output[:320]}" for r in results if not r.passed]
+    notes = summary + (" || " + " || ".join(failed_details) if failed_details else "")
     return TestResult(passed=passed, checks=[r.name for r in results], notes=notes)
 
 
