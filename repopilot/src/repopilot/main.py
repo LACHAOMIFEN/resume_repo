@@ -12,10 +12,11 @@ app = typer.Typer(help="RepoPilot CLI")
 def run(
     issue: str = typer.Option(..., help="Issue text | issue URL | owner/repo#num"),
     out_dir: str = typer.Option("artifacts", help="Output directory for branch/patch/pr draft"),
+    retries: int = typer.Option(1, min=0, help="Retry times when quality gates fail"),
 ):
     parsed = parse_issue_input(issue)
     seed_text = f"{parsed.title}\n\n{parsed.body}".strip()
-    result = run_pipeline(seed_text)
+    result = run_pipeline(seed_text, retries=retries)
     result["input_issue"] = {"title": parsed.title, "body": parsed.body}
 
     artifacts = write_artifacts(
