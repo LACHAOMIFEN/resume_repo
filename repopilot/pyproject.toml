@@ -24,3 +24,8 @@ repopilot = "repopilot.main:app"
 
 [tool.ruff]
 line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".venv", "venv", "node_modules", ".git", "dist", "build"]
+addopts = "-q"
