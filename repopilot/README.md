@@ -15,12 +15,19 @@ source .venv/bin/activate
 pip install '.[dev]'
 cp .env.example .env
 python -m repopilot.main --issue "Fix failing unit tests in parser"
+# artifacts will be generated under ./artifacts
 ```
 
 ## Input Formats
 - Plain text: `--issue "Fix parser edge case"`
 - Issue URL: `--issue "https://github.com/owner/repo/issues/123"`
 - Short ref: `--issue "owner/repo#123"`
+
+## Generated Artifacts
+After each run, RepoPilot writes:
+- `artifacts/branch_name.txt`
+- `artifacts/patch_preview.diff`
+- `artifacts/pr_draft.md`
 
 ## Milestones
 1. Local simulation workflow (no GitHub required)
