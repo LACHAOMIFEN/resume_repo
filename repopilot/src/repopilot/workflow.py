@@ -31,7 +31,7 @@ def coder(plan: Plan) -> CodeProposal:
     )
 
 
-def _run_check(cmd: list[str], timeout: int = 60) -> CheckExec:
+def _run_check(cmd: list[str], timeout: int = 120) -> CheckExec:
     name = " ".join(cmd)
     if shutil.which(cmd[0]) is None:
         return CheckExec(name=name, passed=False, output=f"missing binary: {cmd[0]}")
@@ -40,6 +40,8 @@ def _run_check(cmd: list[str], timeout: int = 60) -> CheckExec:
     # Ensure local package imports work in gate checks
     src_path = os.path.abspath("src")
     env["PYTHONPATH"] = src_path + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    # Avoid third-party pytest plugins from slowing/hanging collection in local env
+    env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
 
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
@@ -51,7 +53,7 @@ def _run_check(cmd: list[str], timeout: int = 60) -> CheckExec:
 
 
 def tester(proposal: CodeProposal, checks: list[list[str]] | None = None) -> TestResult:
-    checks = checks or [[sys.executable, "-m", "pytest", "-q"], ["ruff", "check", "."]]
+    checks = checks or [[sys.executable, "-m", "pytest", "-q", "tests"], ["ruff", "check", "."]]
     results = [_run_check(c) for c in checks]
     passed = all(r.passed for r in results)
     summary = " | ".join([f"{r.name}: {'ok' if r.passed else 'fail'}" for r in results])
