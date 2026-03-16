@@ -30,6 +30,12 @@ After each run, RepoPilot writes:
 - `artifacts/patch_preview.diff`
 - `artifacts/pr_draft.md`
 
+## PR Command (safe preview)
+Print a draft PR command without executing it:
+```bash
+python -m repopilot.main --issue "owner/repo#123" --repo owner/repo --print-pr-command
+```
+
 ## Milestones
 1. Local simulation workflow (no GitHub required)
 2. GitHub issue fetch ✅
