@@ -18,10 +18,11 @@ def run(
     repo: str = typer.Option("", help="owner/repo for PR command generation"),
     base: str = typer.Option("main", help="base branch for PR command"),
     print_pr_command: bool = typer.Option(False, "--print-pr-command", help="Print gh pr create command"),
+    repo_path: str = typer.Option("", "--repo-path", help="Local path to target repo for code context"),
 ):
     parsed = parse_issue_input(issue)
     seed_text = f"{parsed.title}\n\n{parsed.body}".strip()
-    result = run_pipeline(seed_text, retries=retries)
+    result = run_pipeline(seed_text, retries=retries, repo_path=repo_path or None)
     result["input_issue"] = {"title": parsed.title, "body": parsed.body}
 
     artifacts = write_artifacts(
